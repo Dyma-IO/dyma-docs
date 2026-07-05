@@ -10,7 +10,10 @@ Open source code for Dyma lives under the [Dyma-IO](https://github.com/Dyma-IO) 
 
 | Repository | Deploy target | Stack |
 |------------|---------------|-------|
-| [`dyma-frontend`](https://github.com/Dyma-IO/dyma-frontend) | `dyma.io` | Next.js 15 |
+| Repository | Deploy target | Stack |
+|------------|---------------|-------|
+| [`dyma-landing`](https://github.com/Dyma-IO/dyma-landing) | `dyma.io` | Next.js 15 |
+| [`dyma-client`](https://github.com/Dyma-IO/dyma-client) | `dyma.io/app` | Next.js 15 |
 | [`dyma-admin`](https://github.com/Dyma-IO/dyma-admin) | `admin.dyma.io` | Next.js 15 |
 | [`dyma-api`](https://github.com/Dyma-IO/dyma-api) | `api.dyma.io` | NestJS |
 | [`dyma-shared`](https://github.com/Dyma-IO/dyma-shared) | npm package `@dyma-io/shared` | TypeScript |
@@ -34,8 +37,8 @@ Open source code for Dyma lives under the [Dyma-IO](https://github.com/Dyma-IO) 
 Each repository includes a `README` with setup steps. Typical flow:
 
 ```bash
-git clone https://github.com/Dyma-IO/dyma-frontend.git
-cd dyma-frontend
+git clone https://github.com/Dyma-IO/dyma-landing.git
+cd dyma-landing
 cp .env.example .env.local
 npm install
 npm run dev

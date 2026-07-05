@@ -10,7 +10,7 @@ Production is split across independent surfaces that share auth via `dyma-api` a
 
 | Domain | Repository | Audience | Purpose |
 |--------|------------|----------|---------|
-| **dyma.io** | `dyma-frontend` | Public + earners | Landing, user app, public project pages |
+| **dyma.io** | `dyma-landing` + `dyma-client` | Public + earners | Marketing landing and user app |
 | **studio.dyma.io** | `dyma-studio` | Project teams | Campaign and quest management |
 | **admin.dyma.io** | `dyma-admin` | Dyma operators | Platform config, moderation, pricing |
 | **api.dyma.io** | `dyma-api` | All apps | REST API, verification, auth, billing |
