@@ -37,7 +37,7 @@ All quest content follows **Project → Campaign → Quest**. Studio workflows m
 | Title, description, instructions | User-facing copy |
 | Task type | From global catalog (admin can disable types) |
 | Quest category | Filter tag (On-chain, Social, Developer, etc.) |
-| Verification method | Indexer · Platform API · Project REST · Manual |
+| Verification method | Indexer · Platform API · Project REST · Manual · AI verify |
 | Reward | DP, XP, optional token amount |
 | Input schema | Dynamic fields for manual or custom submissions |
 | Limits | Max completions, per-user cap, cooldown |

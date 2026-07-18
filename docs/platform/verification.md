@@ -15,6 +15,8 @@ Dyma supports multiple verification paths. Each quest selects one primary method
 | Project REST API | `project_rest` | Default 30s | Your server verifies custom logic |
 | Manual review | `manual` | ≤ 24h (≤ 12h Pro) | Project or Dyma moderator approves |
 | Hybrid | `hybrid` | Varies | Automatic attempt first; manual on failure |
+| AI verify | `ai_verify` | Seconds–minutes | AI provider scores evidence against quest rules |
+| Hybrid AI | `hybrid_ai` | Varies | AI triage first; manual fallback on low confidence |
 
 ## On-chain indexer
 
@@ -34,31 +36,59 @@ Manual quest inputs support dynamic field types: text, textarea, URL, number, se
 
 ## Project REST API
 
-Projects on eligible plans register a verification endpoint in **Studio → Project Settings → Integrations**.
+Projects on eligible plans (`project_rest_api`) configure a shared signing secret in **Studio → Project Settings → Verification**. Each **Custom (Project REST API)** quest defines its own HTTP request:
+
+| Field | Detail |
+|-------|--------|
+| Method | `GET` or `POST` |
+| Request URL | Full HTTPS (or HTTP) endpoint |
+| Query params / headers | Key-value pairs; values may use templates |
+| JSON body | POST only; string values may use templates |
+| Timeout | 5–60 seconds (default 30) |
+| Signing | Optional `X-Dyma-Signature` (HMAC-SHA256 of body) when a project secret exists |
+
+### Templates
+
+Dyma expands these before calling your API:
+
+- `{{user.id}}`, `{{wallet}}`, `{{submission.id}}`, `{{quest.id}}`, `{{campaign.id}}`, `{{project.id}}`
+- `{{inputs}}` (all earner fields) or `{{inputs.fieldKey}}` for a single field
+
+Earner fields come from the quest **input schema**. Secrets and the raw request are never exposed to the client; Dyma proxies server-side.
 
 ### Flow
 
 ```
-User submits quest
+User submits quest inputs
   → dyma-api validates input schema
-  → POST to project endpoint (signed payload)
-  → Project returns `{ "verified": true, "reason": "optional", "metadata": {} }`
+  → expands templates and calls project endpoint
+  → Project returns `{ "verified": true }` or `{ "success": true }`
   → dyma-api records result and settles reward if verified
 ```
 
-### Endpoint requirements
+### Response contract
 
 | Requirement | Detail |
 |-------------|--------|
-| Method | `POST` |
-| Auth | HMAC-SHA256 in `X-Dyma-Signature` (shared secret per project) |
-| Payload | `submission_id`, `quest_id`, `campaign_id`, `wallet`, `inputs`, `submitted_at` |
-| Response | JSON with `verified` (boolean), optional `reason`, optional `metadata` |
-| Timeout | 30s default; configurable 5–60s in Studio |
-| Retries | 2 retries with exponential backoff on 5xx or timeout |
-| Idempotency | Same `submission_id` returns cached result |
+| Success | HTTP 2xx **and** JSON with `verified: true` or `success: true` |
+| Failure | Non-2xx, or JSON with `verified`/`success` false; optional `reason` |
+| Optional | `metadata` object (stored on the verification attempt) |
+| Retries | Up to 2 retries with backoff on 5xx or timeout |
+| Dry run | Studio preview calls `POST .../verification/rest/dry-run` (no submission) |
 
-**Security:** Secrets are never exposed client-side. Dyma proxies all calls server-side. Projects never receive user email — only wallet and submitted inputs.
+**Security:** Secrets are never exposed client-side. Projects never receive user email. Only wallet, user id, and submitted inputs are sent as configured.
+
+## AI verification
+
+For creative or subjective tasks (memes, hashtag posts, content quality), quests can use `ai_verify` or `hybrid_ai`. The API loads prompt templates from `ai_prompt_templates` and provider credentials from `platform_credentials`. AI logs store metadata only (no PII).
+
+`hybrid_ai` routes low-confidence results to the moderation queue automatically.
+
+## Submission state machine
+
+`idle` → `started` → `verifying` → `claimable` → `claimed` (or `rejected`)
+
+Submissions are validated against each quest's JSON **input schema** at runtime (AJV), not hard-coded per task type.
 
 ## Escrow settlement
 
