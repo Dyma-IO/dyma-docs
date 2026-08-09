@@ -11,8 +11,10 @@ const config: Config = {
     v4: true,
   },
 
-  url: 'https://dyma-io.github.io',
-  baseUrl: '/dyma-docs/',
+  // url/baseUrl default to the GitHub Pages target; override via env for other
+  // hosts (e.g. testnet served at a subdomain root: DOCS_URL + DOCS_BASE_URL=/).
+  url: process.env.DOCS_URL ?? 'https://dyma-io.github.io',
+  baseUrl: process.env.DOCS_BASE_URL ?? '/dyma-docs/',
   organizationName: 'Dyma-IO',
   projectName: 'dyma-docs',
   trailingSlash: false,
