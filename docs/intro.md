@@ -41,7 +41,8 @@ Project (Studio) ─ creates ─► Campaign ─ contains ─► Quests
    reviews the campaign before it goes live (plans with approval bypass skip the queue).
 2. Earners sign in (wallet, Google, X, GitHub, Discord or e-mail), complete quests, and get their
    points as soon as each quest is verified.
-3. When the campaign ends, the reward pool is split **pro rata to points**:
+3. When the campaign ends, the reward pool is split **pro rata to points** (or equally, if the
+   project chose so), under the split rules the project set for the campaign:
    - **Manual distribution** — the project pays, with Dyma's payout assistant (exact amounts,
      batched transfers it signs in its own wallet).
    - **Automatic distribution** — the pool is locked up front in Dyma's open-source CosmWasm escrow

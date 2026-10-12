@@ -4,8 +4,9 @@ sidebar_position: 3
 
 # Distribution modes and the split
 
-A campaign's token pool is shared between earners **in proportion to their points** in that
-campaign. You choose how it is paid in the wizard's **Rewards & distribution** step.
+A campaign's token pool is shared between the earners who qualify, **in proportion to their points**
+in that campaign by default, under the [split rules](#split-rules) you set. You choose how it is
+paid in the wizard's **Rewards & distribution** step.
 
 ## Manual or automatic
 
@@ -13,24 +14,52 @@ campaign. You choose how it is paid in the wizard's **Rewards & distribution** s
 |---|---|---|
 | Who holds the pool | you, until you pay | an escrow contract on Safrochain, from before launch |
 | Who pays | you, with Studio's payout assistant ([Manual payouts](./manual-payouts)) | the contract, after a challenge window ([Automatic distribution](./automatic-escrow)) |
-| Funding | none up front | the pool is locked before the campaign can be submitted ([Funding](./funding-step-by-step)) |
+| Funding | none up front | you lock the pool with a transaction signed in your wallet; the campaign cannot launch until it is locked ([Funding](./funding-step-by-step)) |
 | Dates | optional (open-ended allowed) | start and end required, fixed once funded |
-| Tokens | any registered reward token | bank tokens (native, IBC such as USDC, tokenfactory) and approved CW20 codes on a chain where Dyma's escrow is deployed |
-| Earners see | "Paid by *your project*" | "Rewards locked in Dyma's open-source CosmWasm escrow on Safrochain", contract address and live balance |
+| Split rules | apply when Dyma computes the split | frozen once the pool is locked |
+| Tokens | any registered reward token | bank tokens (native, IBC such as USDC, tokenfactory) and approved CW20 codes on a chain where Dyma's escrow is deployed (Safrochain today) |
+| Earners see | "Paid by *your project*" and the split rules | an **Escrow** badge, the split rules, the contract address and its live balance |
 | Network fees | you pay your transfers | Dyma's operator pays the payout transactions; you pay the funding transaction |
 | Dyma fee | none | `fee_bps` set by Dyma, **0 by default** (capped at 10% by the contracts) |
 
 Both modes compute **exactly the same split**, at the same time, with the same code.
+
+:::note Where the escrow runs
+The escrow runs on Safrochain today. If your reward token lives on another network, you can request
+the escrow for that network from Studio.
+:::
 
 ## Settings
 
 | Setting | Default | Range | Applies to |
 |---|---|---|---|
 | Pool | — | > 0 | both (manual: what you declare you will pay) |
+| Split | by points | by points or equal | both |
+| Minimum points | none | ≥ 1 DP | both |
+| Top N | none (every earner who qualifies) | ≥ 1 earner | both |
+| Maximum payout per earner | none | a token amount up to the pool; the escrow stores it as a share of the pool (`max_share_bps`, 0.01%–100%) | both |
 | Minimum payout | 0.01 token (`10^(decimals−2)` base units) | ≥ 0 | both |
-| Cap per earner | none (100%) | 0.01%–100% of the pool | both |
 | Review grace | 24 hours | 1–72 hours | both |
 | Challenge window | 24 hours | 1 hour–7 days | automatic |
+
+## Split rules
+
+Earners see the rules you set on the campaign page, under **How rewards are split** (only the ones
+that are set).
+
+- **Split by points** (the default): each qualifying earner's share follows their points.
+  **Equal split**: every qualifying earner receives the same amount.
+- **Minimum points**: earners with fewer DP in the campaign do not qualify.
+- **Top N**: only the N earners with the most points are paid.
+- **Maximum payout**: no earner receives more than this amount, whatever their points. On a
+  1,000,000 SAF pool with a maximum of 100,000, ten earners can each receive 100,000; with two
+  earners, each still receives 100,000, never more, and the other 800,000 returns to you.
+- **Minimum payout**: an earner whose share is below it is not paid.
+
+In automatic mode the rules are frozen when you lock the pool: the escrow is created with the
+maximum (as `max_share_bps`, so a top-up raises it in proportion) and the minimum payout, and no
+rule can change afterwards. Manual campaigns are paid from the split Dyma computes with the same
+rules.
 
 ## Which points count
 
@@ -40,6 +69,8 @@ Both modes compute **exactly the same split**, at the same time, with the same c
 - Excluded from the split: project members, suspended accounts, earners without a usable payout
   address on the token's chain, addresses shared by two accounts, and addresses the escrow refuses
   (contracts and the escrow's own role addresses). Earners are told why on their campaign page.
+- Your split rules can leave more earners out: those below the minimum points, and those outside the
+  top N.
 
 ## The formula
 
@@ -58,19 +89,22 @@ skipped  ⇔ amount_i = 0 or amount_i < min_payout   (the amount stays in the le
 Before committing, Dyma **plans** the weights off chain so the whole pool reaches the earners who
 qualify:
 
-1. **Pro rata on points.** Each earner's share of D is `D × points ÷ total points`, rounded down to
-   the token's smallest unit. The units left over by the rounding are handed out one by one, to the
-   largest remainders first, so the shares add up to D exactly.
-2. **Cap (water-filling).** A share above the cap is pinned at the cap and the rest of the pool is
-   shared again between the others, until no share exceeds the cap.
-3. **Minimum payout.** If some shares fall below the minimum, the smallest earners are dropped
+1. **Who qualifies.** Earners below the minimum points are left out; with a top N, only the N
+   earners with the most points remain.
+2. **Pro rata on points, or equal.** Each earner's share of D is `D × points ÷ total points` (split
+   by points) or `D ÷ number of earners` (equal split), rounded down to the token's smallest unit.
+   The units left over by the rounding are handed out one by one, to the largest remainders first,
+   so the shares add up to D exactly.
+3. **Cap (water-filling).** The maximum payout is the cap. A share above the cap is pinned at the cap
+   and the rest of the pool is shared again between the others, until no share exceeds the cap.
+4. **Minimum payout.** If some shares fall below the minimum, the smallest earners are dropped
    (earners with equal points are always treated alike) and the pool is shared again between the
    rest, keeping the largest group in which everyone gets at least the minimum.
-4. The planned amounts are committed as the weights. With the planned balance the contract's formula
+5. The planned amounts are committed as the weights. With the planned balance the contract's formula
    pays every entry exactly its planned amount; if the balance at finalize differs (a top-up),
    payouts scale proportionally and never exceed the cap.
 
-Manual mode uses steps 1–3 for the amounts you pay.
+Manual mode uses steps 1–4 for the amounts you pay.
 
 ## Worked examples
 
@@ -94,7 +128,7 @@ byte order), so nothing is lost.
 | Bo | 10 | 33.333333 |
 | Chi | 10 | 33.333333 |
 
-**3. Cap at 40% (400 USDC).** Pool 1,000.
+**3. Maximum payout 400 USDC (a 40% cap).** Pool 1,000.
 
 | Earner | Points | Pro-rata share | Payout |
 |---|---|---|---|
@@ -105,9 +139,9 @@ byte order), so nothing is lost.
 Ada's excess is shared between Bo and Chi (150 : 50); Bo's new share passes the cap too, so the
 rest goes to Chi. The whole pool is paid.
 
-**4. Cap binding for everyone.** Pool 1,000, cap 25% (250), two earners (70 and 30 points): each
-receives 250, and the **500 left over returns to you** at completion. A cap only pays out the full
-pool when `earners × cap ≥ pool`.
+**4. Maximum binding for everyone.** Pool 1,000, maximum 250 (a 25% cap), two earners (70 and 30
+points): each receives 250, and the **500 left over returns to you** at completion. A cap only pays
+out the full pool when `earners × cap ≥ pool`.
 
 **5. Minimum payout 1 USDC on a 10 USDC pool.**
 
@@ -127,13 +161,30 @@ the full pool.
 `floor(paid_total × 1%)` — 9.90 if every payout succeeds — and refunds the unused reserve with the
 leftovers. Dyma's default fee is **0**.
 
+**7. Maximum and minimum payout.** Pool 1,000,000 SAF, maximum 100,000 SAF per earner (10% of the
+pool), minimum payout 1,000 SAF, every earner with the same points (or an equal split), fee 0.
+
+| Earners | Each receives | Paid out | Returned to you at completion |
+|---|---|---|---|
+| 2 | 100,000 (an even split would be 500,000) | 200,000 | 800,000 |
+| 10 | 100,000 | 1,000,000 | 0 |
+| 20 | 50,000 | 1,000,000 | 0 |
+
+No share falls below the 1,000 SAF minimum here, so everyone is paid.
+
 ## Leftovers
 
-Whatever earners do not receive goes back to **the wallet that funded the escrow** (automatic) or
-simply stays with you (manual): rounding dust, skipped amounts, cap overflow, an unused fee reserve,
-and the whole pool if nobody qualifies. In automatic mode it is refunded by the transaction that
-completes the escrow; failed payouts stay reserved for their earners until the claim deadline and
-are then returned to you as well.
+Whatever earners do not receive (apart from Dyma's fee) goes back to **the wallet that funded the
+escrow** (automatic) or simply stays with you (manual). In automatic mode it comes back at these
+moments:
+
+| When | What comes back | How |
+|---|---|---|
+| At completion | rounding dust, skipped amounts, cap overflow, the unused fee reserve, and the whole pool if nobody qualifies | automatically, in the transaction that completes the escrow |
+| After the claim deadline | payouts still unclaimed (failed payouts stay reserved for their earners until then) | `sweep_leftover`, which anyone can call |
+| If the split expires | the whole pool, when Dyma did not finalize the split before the commit deadline | `reclaim_expired`, which anyone can call |
+
+See [Automatic distribution](./automatic-escrow) for the deadlines.
 
 ## Previewing
 

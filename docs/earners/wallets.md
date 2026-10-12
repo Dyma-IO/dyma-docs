@@ -67,6 +67,9 @@ You are left out of a split (and told why on the campaign page) when:
 | Project team member | members of the project do not take part in its pool |
 | Account suspended | |
 
+A campaign's own split rules can also leave you out: fewer points than its minimum, or not among its
+top N earners. See [Token rewards](./token-rewards#the-campaigns-split-rules).
+
 ## Safety
 
 - Dyma never asks for your seed phrase, and signing in never moves funds.

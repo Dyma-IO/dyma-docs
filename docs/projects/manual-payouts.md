@@ -5,8 +5,9 @@ sidebar_position: 6
 # Manual payouts
 
 In manual mode you keep the pool and pay earners yourself after the campaign. Dyma computes the
-same split as the escrow would, prepares the transfers, and checks every payout transaction on
-chain before marking anyone as paid.
+same split as the escrow would, with your [split rules](./distribution#split-rules), prepares the
+transfers, and checks every payout transaction on chain before marking anyone as paid. Whatever is
+not paid out simply stays with you.
 
 ## When
 
@@ -43,7 +44,8 @@ Repeat for each batch. The assistant shows what is pending, submitted and paid.
 
 The same exclusions as in automatic mode apply (no payout wallet on the token's chain, below the
 minimum payout, shared address, project member, suspended account). Earners are told the reason and,
-before the list is frozen, how to fix a missing payout wallet.
+before the list is frozen, how to fix a missing payout wallet. Your split rules apply too: earners
+below the minimum points or outside the top N are not paid.
 
 ## Good practice
 

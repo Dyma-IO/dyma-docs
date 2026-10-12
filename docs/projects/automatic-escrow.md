@@ -5,10 +5,14 @@ sidebar_position: 4
 # Automatic distribution (escrow)
 
 In automatic mode the pool is locked **before** the campaign goes live in a campaign escrow — a
-CosmWasm contract created for your campaign by Dyma's escrow factory on Safrochain. After the
-campaign, Dyma's operator commits the split, a public challenge window opens, and then the contract
-pays every earner. Refunds and leftovers can only ever go to **the wallet that funded it** (the
-escrow owner).
+CosmWasm contract created for your campaign by Dyma's escrow factory on Safrochain. You lock it with
+a transaction signed in your wallet, and the campaign cannot launch until the pool is locked
+([step by step](./funding-step-by-step)). After the campaign, Dyma's operator commits the split, a
+public challenge window opens, and then the contract pays every earner in the split. Refunds and
+leftovers can only ever go to **the wallet that funded it** (the escrow owner).
+
+The escrow runs on Safrochain today. Projects whose reward token is on another network can request
+it for that network from Studio.
 
 :::caution Audit status
 The escrow contracts passed an internal pre-audit review (32 findings, all fixed or documented) and
@@ -102,9 +106,11 @@ incident.
   does not stop the batch. The amount stays **reserved** for that earner, who can `claim` it, and
   anyone can `retry_failed` until the claim deadline.
 - When the last entry is processed, the escrow charges the fee (on what earners actually received)
-  and refunds you everything else: rounding dust, skipped and cap amounts, the unused fee reserve,
-  tokens that arrived after funding.
+  and automatically refunds you everything else: rounding dust, amounts skipped under the minimum
+  payout, amounts above the maximum payout, the unused fee reserve, tokens that arrived after funding.
 - After the claim deadline, `sweep_leftover` sends payouts that are still unclaimed back to you.
+- If the escrow expires (the split was not finalized in time), `reclaim_expired` returns the whole
+  pool to you (see [If Dyma never finalizes](#if-dyma-never-finalizes)).
 - Tokens other than the pool asset sent to the escrow by mistake can be returned to you at any time
   (`refund_stray_assets`).
 
@@ -137,4 +143,5 @@ Prefer IBC stablecoins (USDC) or tokens whose admin was renounced.
 
 The operator, guardian and pauser are read from the factory at call time, so Dyma can rotate a
 compromised key on every escrow at once; the economic rules of your escrow (fee, cap, minimum
-payout, windows, limits) are frozen when it is created.
+payout, windows, limits) are frozen when it is created, and so are the campaign's other
+[split rules](./distribution#split-rules) (split by points or equal, top N, minimum points).

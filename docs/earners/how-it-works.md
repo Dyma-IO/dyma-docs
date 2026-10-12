@@ -6,7 +6,8 @@ sidebar_position: 1
 
 Everything you do on Dyma happens inside a **campaign** run by a **project**. A campaign is a set
 of **quests**; each verified quest earns you **points (DP)** and **XP**, and campaigns with a token
-pool share it between earners in proportion to their points.
+pool share it between earners under the rules the project set: in proportion to their points by
+default, or equally ([Token rewards](./token-rewards)).
 
 ## Sign in
 
