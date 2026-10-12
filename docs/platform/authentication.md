@@ -20,7 +20,7 @@ its own host. Users get a stable public id `dymauser_<32 hex>`; admins `dymaadmi
 
 | Method | Where | Notes |
 |---|---|---|
-| Wallet | earner app, account linking | Keplr, Leap, Cosmostation, EightSaf, WalletConnect — see below |
+| Wallet | earner app, account linking | Zunia, Keplr, Cosmostation, EightSaf, WalletConnect — see below |
 | Google | earner app, Studio | OAuth 2.0 |
 | X | earner app | OAuth 2.0 with PKCE; the grant also covers X quest checks |
 | GitHub | earner app, Studio | OAuth (`read:user` for account linking) |

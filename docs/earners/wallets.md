@@ -12,8 +12,8 @@ sign a message, not a transaction.
 
 | Wallet | Where | Notes |
 |---|---|---|
-| **Keplr** | browser extension, Keplr Mobile through WalletConnect | the default Cosmos wallet; if Leap is set as your default wallet it may answer in Keplr's place |
-| **Leap** | browser extension, Leap Mobile through WalletConnect | |
+| **Zunia** | browser extension ([Chrome Web Store](https://chromewebstore.google.com/detail/zunia/ngokakoekdogobjmokipglbcclelgajk)); mobile signing coming soon | listed first; works inside the Zunia app's browser too |
+| **Keplr** | browser extension, Keplr Mobile through WalletConnect | the default Cosmos wallet |
 | **Cosmostation** | browser extension, mobile through WalletConnect | |
 | **EightSaf** | browser extension | Safrochain only |
 | **WalletConnect** | any WalletConnect v2 Cosmos wallet on your phone | scan the QR code on desktop, or open the deep link on mobile; offered when the app has a WalletConnect project configured |

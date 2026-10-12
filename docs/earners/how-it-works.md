@@ -15,7 +15,7 @@ Open the earner app and choose any of:
 
 | Method | Notes |
 |---|---|
-| Wallet | Keplr, Leap, Cosmostation, EightSaf on desktop; any WalletConnect wallet on mobile. You sign a message (no fee, no transaction) — see [Wallets](./wallets) |
+| Wallet | Zunia, Keplr, Cosmostation, EightSaf on desktop; any WalletConnect wallet on mobile. You sign a message (no fee, no transaction) — see [Wallets](./wallets) |
 | Google, X, GitHub, Discord | OAuth sign-in |
 | E-mail | a one-time code sent to your inbox |
 

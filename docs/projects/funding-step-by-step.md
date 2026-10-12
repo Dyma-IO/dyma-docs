@@ -27,7 +27,7 @@ the project's wallet; that wallet becomes the escrow **owner** and receives ever
    points, split by points or equal), the review grace (1–72 h) and the challenge window
    (1 h–7 days). Save.
 2. **Basics.** Set both the start and the end date. The end must be at least two hours away.
-3. **Fund escrow.** Connect the wallet that will own the escrow (Keplr, Leap, Cosmostation,
+3. **Fund escrow.** Connect the wallet that will own the escrow (Zunia, Keplr, Cosmostation,
    EightSaf, or WalletConnect), check the summary — pool, dates, review grace, challenge window,
    where refunds go — and choose to lock the pool.
 4. Dyma signs a **one-hour funding ticket**: a message binding the chain, the factory, your
