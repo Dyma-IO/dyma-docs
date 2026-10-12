@@ -1,141 +1,97 @@
 ---
-sidebar_position: 6
+sidebar_position: 7
 ---
 
-# Integrations
+# Integrations and credentials
 
-Dyma stores third-party credentials in **`platform_credentials`** (encrypted at rest). Super admins configure providers in **admin.dyma.io → Settings → Credentials**. The API never returns decrypted secrets to clients.
-
-## Tier 1 platforms
-
-| Platform | Provider key | Used for |
-|----------|--------------|----------|
-| X / Twitter | `twitter` | Follow, like, retweet, hashtag tasks |
-| Discord | `discord` | Join server, role verification |
-| Telegram | `telegram` | Join group/channel, bot start |
-
-### Discord app credentials
-
-Configure in **admin.dyma.io → Integrations → Discord**.
-
-| Secret / variable key | Required | Purpose |
-|-----------------------|----------|---------|
-| `clientId` | Yes | Discord application (OAuth2) client id |
-| `clientSecret` | Yes | OAuth2 client secret |
-| `botToken` | Yes | Bot token for guild membership and role checks |
-| `publicKey` | No | Interactions public key (stored for webhook verify) |
-| `botPermissions` | No | Bot-install OAuth permission bitfield (default `1024` = View Channels) |
-
-Empty fields on save keep the currently stored value (partial rotate). Redirect URIs are derived from `AUTH_CALLBACK_BASE_URL` and shown in Admin (auth callback, link callback, bot-install callback).
+Third-party credentials are stored encrypted (AES-256-GCM under `CREDENTIALS_MASTER_KEY`) in
+`platform_credentials` and managed in **Admin → Integrations** / **Settings → Credentials**. The API
+never returns decrypted secrets; stored credentials take precedence over environment variables.
 
 | Endpoint | Description |
-|----------|-------------|
-| `GET /v1/admin/discord/setup` | Masked setup info, editable key list, redirect URIs |
-| `PUT /v1/admin/credentials/discord` | Create or rotate secrets (merged) |
-| `POST /v1/admin/credentials/discord/test` | Bot token `getMe` check |
+|---|---|
+| `GET /v1/admin/credentials` | masked metadata only |
+| `PUT /v1/admin/credentials/:provider` | create or rotate (empty fields keep the stored value) |
+| `POST /v1/admin/credentials/:provider/test` | connectivity check |
+| `GET /v1/admin/integrations/health` | X, Discord (incl. Message Content intent), Telegram webhook, YouTube quota, GitHub rate limit, SES quota, file storage — 4 s per check, cached 60 s |
 
-### Telegram bot credentials
+Every write is audit-logged.
 
-Configure in **admin.dyma.io → Integrations → Telegram** (or Credentials).
+## Providers
 
-| Secret key | Purpose |
-|------------|---------|
-| `botToken` | BotFather token (required) |
-| `webhookSecret` | Auto-generated on webhook register; sent as `X-Telegram-Bot-Api-Secret-Token` |
+| Provider | Key | Used for |
+|---|---|---|
+| X | `twitter` | sign-in and X quest checks; the app bearer token (`bearerToken`, or `TWITTER_BEARER_TOKEN`) serves app-only lookups: Studio target resolution and the X Spaces quests |
+| Discord | `discord` | sign-in, account linking, the Dyma bot (join, role, message quests) |
+| Telegram | `telegram` | the Dyma bot that links earners' Telegram accounts |
+| GitHub | `github` | sign-in, account linking, project repository authorization |
+| YouTube | `youtube` | account linking, subscribe/like checks, metadata (optional API key) |
+| Google | `google` | sign-in |
+| S3 storage | `hetzner_s3` | uploads (any S3-compatible bucket) |
+| AWS SES | `aws_ses` | e-mail (read from the environment in practice) |
+| AI provider | `ai_provider` | SEO assistant |
+| Stripe | `stripe` | kept but disabled; Stripe secrets are read from the environment |
+| Escrow keys | `escrow_operator`, `escrow_ticket`, `escrow_pauser` | the escrow's hot keys in mnemonic mode, super admin only, write-only (Admin → Settings → Credentials shows the derived address and balance) — see [Escrow operations](../operators/escrow-operations) |
 
-Metadata may include `botUsername`, `webhookUrl`, `webhookSetAt`.
+## Discord
 
-| Endpoint | Description |
-|----------|-------------|
-| `PUT /v1/admin/credentials/telegram` | Save `{ botToken }` |
-| `POST /v1/admin/credentials/telegram/test` | `getMe` connectivity check |
-| `POST /v1/admin/telegram/register-webhook` | `setWebhook` to `{API_PUBLIC_URL}/v1/telegram/webhook` |
+| Secret | Required | Purpose |
+|---|---|---|
+| `clientId`, `clientSecret` | yes | OAuth2 application |
+| `botToken` | yes | the Dyma bot: membership, roles, messages |
+| `publicKey` | no | interactions public key |
+| `botPermissions` | no | the install link always uses View Channels + Read Message History (66560) |
 
-Set `API_PUBLIC_URL` on the API so Telegram can reach the webhook (ngrok or production API origin).
+**Message Content intent.** Quests that require a message *containing* a text need Discord's
+privileged Message Content intent on the application: Discord Developer Portal → your application →
+**Bot** → *Privileged Gateway Intents* → **Message Content Intent** (applications in more than 100
+servers need Discord's approval for it). Dyma detects the intent (cached for 10 minutes) and reports
+it in `GET /v1/admin/discord/setup` and the integrations health page; while it is off, Studio
+disables the "message must contain" option and such checks return a configuration error.
 
-## Infrastructure providers
+Redirect URIs are derived from `AUTH_CALLBACK_BASE_URL` and shown in Admin (sign-in callback, link
+callback, bot-install callback).
 
-| Provider | Key | Purpose |
-|----------|-----|---------|
-| Hetzner Object Storage | `hetzner_s3` | Evidence uploads, covers, OG assets |
-| AWS SES | `aws_ses` | Transactional email outbox |
-| AI provider | `ai_provider` | SEO assistant, AI verify tasks |
-| Stripe | `stripe` | Subscriptions and billing webhooks |
+## Telegram
 
-## Admin credential API
+| Secret | Purpose |
+|---|---|
+| `botToken` | the Dyma bot (BotFather token) |
+| `webhookSecret` | generated when the webhook is registered; sent by Telegram as `X-Telegram-Bot-Api-Secret-Token` |
 
-| Endpoint | Description |
-|----------|-------------|
-| `GET /v1/admin/credentials` | Masked metadata only |
-| `PUT /v1/admin/credentials/:provider` | Create or rotate secrets |
-| `POST /v1/admin/credentials/:provider/test` | Connectivity check |
+`POST /v1/admin/telegram/register-webhook` points Telegram at `{API_PUBLIC_URL}/v1/telegram/webhook`
+(set `API_PUBLIC_URL`). Projects register their own bots in Studio; their webhook is
+`/v1/telegram/webhook/project/:projectId`.
 
-All writes are recorded in `audit_logs`.
-
-## File uploads (Hetzner S3)
+## Files
 
 ```
-Client/Studio → POST /v1/files/presign
-  → presigned PUT URL (15 min TTL)
-  → direct upload to bucket
-  → POST /v1/files/:id/confirm
+App → POST /v1/files/presign → upload URL (15 min) → upload → POST /v1/files/:id/confirm
 ```
 
-Buckets: `dyma-uploads` (evidence), `dyma-assets` (covers, OG).
+- **S3 driver**: a presigned PUT to the bucket (Hetzner Object Storage or any S3 API, path-style).
+- **Local driver** (`FILES_DRIVER=local`, dev and testnet): a signed `PUT /v1/files/:id/content` on
+  the API, files under `FILES_LOCAL_DIR`.
+- Images are served through `GET /v1/files/:id/image` (variants). **Evidence** files are private:
+  `GET /v1/files/:id/evidence` for the uploader, the project team and Dyma operators only.
+- Uploads are capped at 10 MB.
 
-## Project REST verification
+## E-mail
 
-Growth+ plans can register a custom verification endpoint per project. Dyma signs outbound requests with HMAC-SHA256 (`X-Dyma-Signature`). See [Verification](./verification.md#project-rest-api).
+Mail goes through an outbox (`notification_outbox`) processed by a BullMQ worker and sent with AWS
+SES (`AWS_SES_REGION`, `AWS_SES_FROM`, `AWS_SES_USER_NAME`, `AWS_SES_PASSWORD` — IAM access keys,
+not SMTP credentials). Templates are branded HTML plus plain text; links use the app URLs
+(`CLIENT_APP_URL`, `STUDIO_APP_URL`, `ADMIN_APP_URL`). `npm run preview:mail` renders every template
+to `tmp/email-previews/`; `npm run test:ses` sends a test message.
 
 ## Realtime
 
-Redis pub/sub feeds:
+| Channel | Audience |
+|---|---|
+| `GET /v1/realtime/submissions` (SSE) | an earner's submission updates (points awarded, rejection reason), ping every 25 s |
+| `GET /v1/notifications/stream` (SSE) | an earner's or owner's notifications |
+| `GET /v1/realtime/projects/:projectId/submissions` (SSE) | a project's submission activity (admins and moderators) |
+| socket.io namespace `/v1/realtime/studio` | Studio, user token required, one room per project |
+| socket.io namespace `/v1/realtime/admin` | admin console, admin token required |
 
-- `GET /v1/realtime/submissions` (SSE) — submission status for users
-- WebSocket `/v1/realtime/studio` — moderation queue events
-- WebSocket `/v1/realtime/admin` — KPI and credential expiry alerts
-
-| `npm run test:ses` | Validate SES credentials; optional `TEST_SES_TO` sends multipart HTML sample |
-| `npm run preview:mail` | Render all templates to `tmp/email-previews/` (run `npm run build` first) |
-
-## Transactional email (AWS SES)
-
-Mail is sent from **dyma-api** via the `notification_outbox` queue and BullMQ worker. Templates are branded HTML + plain text (logo header, footer, security notice).
-
-### Environment
-
-| Variable | Purpose |
-|----------|---------|
-| `AWS_SES_REGION` | SES region |
-| `AWS_SES_FROM` | From address |
-| `AWS_SES_USER_NAME` | IAM access key ID |
-| `AWS_SES_PASSWORD` | IAM secret access key |
-| `MAIL_LOGO_URL` | Hosted logo image URL |
-| `MAIL_SUPPORT_EMAIL` | Footer support address |
-| `STUDIO_APP_URL` / `ADMIN_APP_URL` / `CLIENT_APP_URL` | CTA links per app |
-
-### Template IDs (selection)
-
-| ID | Use |
-|----|-----|
-| `studio.signup_verify_otp` | Studio signup email verification |
-| `studio.password_reset` | Studio forgot password |
-| `admin.password_reset` | Admin forgot password |
-| `notify.claimable_rewards` | Quest reward ready (respects prefs) |
-| `billing.payment_failed` | Stripe invoice failure |
-| `wallet.email_link_otp` | On-chain email link verification |
-| `quest.email_link_otp` | Verified Email quest OTP (project + quest context) |
-| `studio.moderator_invite` | Project moderator invite |
-
-Full list: `@dyma-io/shared` → `MAIL_TEMPLATE_IDS`.
-
-## Client SDK
-
-OpenAPI is exported to `dyma-api/openapi.json`. The `@dyma-io/api-client` package provides a typed fetch wrapper for client, studio, and admin apps.
-
-See also [Authentication](./authentication.md) for Keplr, Google, and Twitter sign-in.
-
-```bash
-cd dyma-api
-npm run generate:api-client
-```
+Behind nginx, the SSE routes need `proxy_buffering off` (see [Deployment](../operators/deployment#nginx)).

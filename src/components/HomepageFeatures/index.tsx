@@ -10,20 +10,21 @@ type FeatureItem = {
 
 const FeatureList: FeatureItem[] = [
   {
-    title: 'Verifiable work',
+    title: 'Verified at the source',
     description: (
       <>
-        Quests are validated by on-chain indexers, platform integrations, project APIs, or
-        moderated review. Rewards settle from escrow directly to contributor wallets.
+        Quests are checked on chain, through X, Discord, Telegram, YouTube and GitHub, through a
+        project&apos;s own signed REST endpoint, or by a moderator. Points are credited the moment a
+        quest is verified.
       </>
     ),
   },
   {
-    title: 'Portable reputation',
+    title: 'Rewards you can check',
     description: (
       <>
-        Completions accumulate into DR (Dima Reputation) and DP (Dyma Points). Credentials travel
-        with the user across campaigns and projects.
+        Projects pay token rewards themselves, or lock the pool in Dyma&apos;s open-source CosmWasm
+        escrow on Safrochain, where the split, the deadlines and every payout are on chain.
       </>
     ),
   },
@@ -31,8 +32,8 @@ const FeatureList: FeatureItem[] = [
     title: 'Built for projects',
     description: (
       <>
-        Launch campaigns in Studio with a Project → Campaign → Quest hierarchy, dynamic task types,
-        and optional custom verification endpoints.
+        Studio runs the Project → Campaign → Quest hierarchy: a campaign wizard, a review queue,
+        exports, integrations and plans paid in USDC on Safrochain.
       </>
     ),
   },

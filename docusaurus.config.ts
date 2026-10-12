@@ -20,7 +20,14 @@ const config: Config = {
   trailingSlash: false,
 
   onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
+  onBrokenAnchors: 'throw',
+
+  markdown: {
+    hooks: {
+      onBrokenMarkdownLinks: 'throw',
+      onBrokenMarkdownImages: 'throw',
+    },
+  },
 
   i18n: {
     defaultLocale: 'en',
@@ -85,17 +92,19 @@ const config: Config = {
           title: 'Documentation',
           items: [
             {label: 'Introduction', to: '/docs/intro'},
-            {label: 'Getting started', to: '/docs/getting-started/overview'},
-            {label: 'Platform', to: '/docs/platform/topology'},
-            {label: 'Developers', to: '/docs/developers/repositories'},
+            {label: 'For earners', to: '/docs/earners/how-it-works'},
+            {label: 'For projects', to: '/docs/projects/getting-started'},
+            {label: 'Smart contracts', to: '/docs/contracts/overview'},
+            {label: 'Operators', to: '/docs/operators/environment'},
           ],
         },
         {
           title: 'Product',
           items: [
             {label: 'dyma.io', href: 'https://dyma.io'},
+            {label: 'Earner app', href: 'https://app.dyma.io'},
             {label: 'Studio', href: 'https://studio.dyma.io'},
-            {label: 'API', href: 'https://api.dyma.io/docs'},
+            {label: 'Developers', to: '/docs/developers/repositories'},
           ],
         },
         {

@@ -4,113 +4,97 @@ sidebar_position: 4
 
 # Authentication
 
-Dyma has **two separate auth systems**:
+Dyma has two separate identity systems:
 
-1. **End users** (`dyma-client`, `dyma-studio`) — Keplr wallet, Google, or X/Twitter
-2. **Admin operators** (`dyma-admin`) — email/password + TOTP 2FA + RBAC roles
+1. **Users** — earners and project teams (`dyma-client`, `dyma-studio`): wallets, OAuth, e-mail
+   codes, and Studio passwords.
+2. **Admin operators** (`dyma-admin`): e-mail and password with two-factor authentication and
+   role-based permissions.
 
----
+Every successful sign-in returns an API token that the app's server keeps in an httpOnly cookie on
+its own host. Users get a stable public id `dymauser_<32 hex>`; admins `dymaadmin_<32 hex>`.
 
-## End-user authentication
+## User sign-in methods
 
-Dyma supports three sign-in methods. All successful logins return a JWT (`accessToken`) and a public user id (`publicId`) prefixed with `dymauser_`.
+`GET /v1/auth/methods` lists what is enabled in an environment.
 
-## Methods
+| Method | Where | Notes |
+|---|---|---|
+| Wallet | earner app, account linking | Keplr, Leap, Cosmostation, EightSaf, WalletConnect — see below |
+| Google | earner app, Studio | OAuth 2.0 |
+| X | earner app | OAuth 2.0 with PKCE; the grant also covers X quest checks |
+| GitHub | earner app, Studio | OAuth (`read:user` for account linking) |
+| Discord | earner app | OAuth |
+| E-mail code | earner app | one-time code |
+| Password | Studio | e-mail verification at sign-up, optional 2FA (authenticator app or e-mail code), Turnstile bot protection |
 
-| Method | ID | Default | Notes |
-|--------|-----|---------|-------|
-| Keplr (Cosmos wallet) | `keplr` | Yes | Chain must be in the [Keplr chain registry](https://github.com/chainapsis/keplr-chain-registry) |
-| Google | `google` | No | OAuth 2.0 |
-| X (Twitter) | `twitter` | No | OAuth 2.0 with PKCE |
+Accounts can link several methods; linking a wallet or social account already used by another
+account offers to **merge** the two accounts.
 
-`GET /v1/auth/methods` returns the enabled methods for the current environment.
+## Wallet sign-in (CAIP-122)
 
-## Keplr / Cosmos wallet
+1. `GET /v1/auth/wallet/challenge?address=<addr>&chainId=<chain>` returns a one-time nonce
+   (`dyma_nonce_…`, valid 5 minutes) and the message to sign:
 
-Default chain: **Safrochain** (`safrochain-1`, bech32 prefix `addr_safro`).
+   ```
+   app.dyma.io wants you to sign in with your Cosmos account:
+   addr_safro1…
 
-### Flow
+   Sign in to Dyma.
 
-1. `GET /v1/auth/keplr/chains` — list allowed registry chains
-2. `GET /v1/auth/keplr/nonce?address={addr}&chainId={optional}` — returns `dyma_nonce_*` and sign message
-3. User signs in Keplr
-4. `POST /v1/auth/keplr/verify` — body: `address`, `pubkey`, `signature`, `nonce`, optional `chainId`
-5. Response: `{ accessToken, publicId, userId, authMethod: "keplr", chainId }`
+   URI: https://app.dyma.io
+   Version: 1
+   Chain ID: safrochain-1
+   Nonce: dyma_nonce_…
+   Issued At: 2026-10-10T08:00:00Z
+   Expiration Time: 2026-10-10T08:05:00Z
+   ```
 
-Sign message format:
+2. The wallet signs it as an ADR-036 arbitrary message (no transaction, no fee).
+3. `POST /v1/auth/wallet/verify` with `address`, `pubkey`, `signature`, `nonce`, `chainId` (and an
+   optional referral `ref`). The nonce is consumed atomically; any signature error is a 401.
 
-```
-Sign in to Dyma
-Nonce: dyma_nonce_...
-Chain: safrochain-1
-```
+Both secp256k1 chains and Ethereum-style `eth_secp256k1` chains (keccak address derivation, as
+Keplr signs them) are supported. Sign-in works on Dyma's curated list of Cosmos chains (Safrochain
+by default), extended by `DYMA_EXTRA_KEPLR_CHAINS`; wallets can be linked on any enabled chain
+registered in admin. Linking uses `GET /v1/users/me/wallets/challenge` (bound to the account) and
+`POST /v1/users/me/wallets`. The legacy `GET /v1/auth/keplr/nonce` and `POST /v1/auth/keplr/verify`
+routes answer with the same challenge.
 
-Only chains present in Dyma's Keplr allowlist are accepted. Additional chains can be loaded from the registry via `DYMA_EXTRA_KEPLR_CHAINS`.
+## OAuth callbacks
 
-## Google OAuth
+All provider callbacks answer with a redirect — to the earner app's `/auth/callback`, Studio's
+`/login`, or the account-link popup — carrying a readable `error` when something failed; they never
+return JSON. Callback URLs are built from `AUTH_CALLBACK_BASE_URL` and redirects are restricted to
+the configured app origins.
 
-1. `GET /v1/auth/google/start` — returns authorization `url`
-2. User completes Google consent
-3. `GET /v1/auth/google/callback` — API exchanges code, redirects to frontend with `token` and `publicId`
+## Admin authentication
 
-## X (Twitter) OAuth
+1. `POST /v1/admin/auth/login` with e-mail and password.
+2. When 2FA is on: `POST /v1/admin/auth/2fa/verify` with the challenge token and a code from an
+   authenticator app or an e-mail code.
 
-1. `GET /v1/auth/twitter/start` — returns authorization `url` (PKCE)
-2. User completes X consent
-3. `GET /v1/auth/twitter/callback` — API exchanges code, redirects to frontend
+| Protection | Rule |
+|---|---|
+| Wrong codes | 5 per sign-in challenge, 10 per account, then a 15-minute lock |
+| Rate limits | credentials 10 per minute, e-mail codes 5 per minute |
+| Super admin 2FA | optional platform setting: super admins without 2FA can only reach the 2FA routes |
+| Session revocation | password change or reset, 2FA changes, role changes and suspension revoke older tokens |
+| Audit | sign-in events with IP and user agent |
 
-## Admin authentication (`dyma-admin`)
+Roles: `super_admin` (everything), `dyma_moderator` (global moderation), plus project roles
+`project_admin` and `project_moderator` for Studio. Permissions include `platform:manage`,
+`credentials:manage`, `plans:manage`, `task_types:manage`, `moderation:global`.
 
-Separate from wallet/OAuth users. Admin operators use **email + password** and **TOTP 2FA** (Google Authenticator, Authy, etc.).
+The first super admin is created by the seed from `ADMIN_BOOTSTRAP_EMAIL` and
+`ADMIN_BOOTSTRAP_PASSWORD`.
 
-Public id prefix: `dymaadmin_`. JWT audience: `dyma-admin` (use Swagger **admin** bearer scheme).
+## Identifier prefixes
 
-### Roles
-
-Uses the platform RBAC tables (`roles`, `permissions`, `admin_user_roles`):
-
-| Role | Slug | Access |
-|------|------|--------|
-| Super admin | `super_admin` | Full platform config |
-| Dyma moderator | `dyma_moderator` | Global moderation |
-
-### Login flow
-
-1. `POST /v1/admin/auth/login` — `{ email, password }`
-2. If `requires2fa: true` → `POST /v1/admin/auth/2fa/verify` with `{ challengeToken, code }`
-3. Response: `{ accessToken, admin: { publicId, roles, permissions } }`
-
-### 2FA enrollment
-
-1. `POST /v1/admin/auth/2fa/setup` (admin JWT) — returns `otpauthUrl` for QR scan
-2. `POST /v1/admin/auth/2fa/enable` — `{ code }` confirms enrollment
-3. `POST /v1/admin/auth/2fa/disable` — `{ code }` to turn off
-
-### Bootstrap (local dev)
-
-Set in `.env` and run `npx prisma db seed`:
-
-```
-ADMIN_BOOTSTRAP_EMAIL=admin@dyma.io
-ADMIN_BOOTSTRAP_PASSWORD=change-me-min-12-chars
-```
-
-## Public user IDs
-
-Every user receives a stable public id: `dymauser_{32hex}` (e.g. `dymauser_a1b2c3d4...`). Use this in client UI and support tickets; internal UUID remains in JWT `sub`.
-
-## Dyma prefixes
-
-| Resource | Prefix | Example |
-|----------|--------|---------|
-| User public id | `dymauser_` | `dymauser_abc123...` |
-| Admin public id | `dymaadmin_` | `dymaadmin_abc123...` |
-| Admin 2FA challenge | `dyma_admin_challenge_` | `dyma_admin_challenge_...` |
-| Auth nonce | `dyma_nonce_` | `dyma_nonce_deadbeef...` |
-| OAuth state | `dyma_oauth_` | `dyma_oauth_...` |
-| API key display | `dyma_key_` | `dyma_key_a1b2...` |
-| Redis keys | `dyma:` | `dyma:auth:nonce:...` |
-
-## Environment variables
-
-See `dyma-api/.env.example`: `DYMA_DEFAULT_KEPLR_CHAIN_ID`, `GOOGLE_CLIENT_ID`, `TWITTER_CLIENT_ID`, `ADMIN_BOOTSTRAP_EMAIL`, `ADMIN_JWT_SECRET`.
+| Resource | Prefix |
+|---|---|
+| User public id | `dymauser_` |
+| Admin public id | `dymaadmin_` |
+| Wallet challenge nonce | `dyma_nonce_` |
+| API key (display) | `dyma_key_` |
+| Redis keys | `dyma:` |

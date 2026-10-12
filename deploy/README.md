@@ -1,72 +1,72 @@
-# Deploy — dyma-docs (testnet)
+# Deploy — dyma-docs
 
-Static Docusaurus site. `deploy/deploy.sh` builds to `./build` and **nginx serves
-it directly** — no PM2, no runtime, no `dyma-shared`. Manual for now.
+Static Docusaurus site. `deploy/deploy.sh` builds each commit in its own release
+directory and switches a `current` symlink that nginx serves; no PM2, no runtime, no
+dyma-shared. GitHub Pages (`.github/workflows/deploy.yml`) is the other target.
 
-- Host: `88.99.211.113` · user `dyma` · under `/home/dyma`
-- nginx `testnet.docs.dyma.io` → `root /home/dyma/testnet.docs.dyma.io/build`
+| | Testnet | Production |
+|---|---|---|
+| `APP_ROOT` | `/home/dyma/testnet.docs.dyma.io` | e.g. `/home/dyma/docs.dyma.io` |
+| `DOCS_URL` / `DOCS_BASE_URL` | `https://testnet.docs.dyma.io` / `/` | `https://docs.dyma.io` / `/` |
+| nginx root | `$APP_ROOT/current/build` | same |
 
 ```
-/home/dyma/
-└─ testnet.docs.dyma.io/    this repo → build/ served statically by nginx
+/home/dyma/testnet.docs.dyma.io/     APP_ROOT
+├─ repo/                             dyma-docs clone: fetched, never built
+├─ releases/<UTC time>-<sha7>/app/   exported commit + node_modules + build/
+├─ current  -> releases/<id>/app     nginx serves current/build
+├─ previous -> releases/<id>/app     rollback target
+└─ deploy.log
 ```
 
-## baseUrl override (why this differs)
+## What `deploy/deploy.sh` does
 
-The committed config targets **GitHub Pages**: `url=https://dyma-io.github.io`,
-`baseUrl=/dyma-docs/`. A site built with `baseUrl=/dyma-docs/` but served at a
-subdomain **root** would 404 all its assets (`/dyma-docs/assets/...`).
+1. Fetches the repo, resolves `origin/$DEPLOY_BRANCH` (or `--ref`), re-runs itself from
+   that commit when the script changed.
+2. Exports the commit into `releases/<id>/app`, runs `npm ci` and `docusaurus build`
+   with `DOCS_URL` / `DOCS_BASE_URL` (broken links fail the build: `onBrokenLinks: 'throw'`).
+3. Refuses a build without `build/index.html`, or one that still points at the GitHub
+   Pages base (`/dyma-docs/assets/`) when `DOCS_BASE_URL=/`.
+4. Switches `current` atomically; with `HEALTH_URL` set, checks the public URL and
+   switches back on failure.
+5. Keeps the newest `KEEP_RELEASES` (4) releases.
 
-The config now reads these from env with the GH-Pages values as defaults:
-
-```ts
-url:     process.env.DOCS_URL     ?? 'https://dyma-io.github.io',
-baseUrl: process.env.DOCS_BASE_URL ?? '/dyma-docs/',
+```bash
+deploy/deploy.sh                                   # origin/main
+deploy/deploy.sh --ref <branch|tag|sha>
+deploy/deploy.sh --rollback                        # back to `previous`
+deploy/deploy.sh --status
+HEALTH_URL=https://testnet.docs.dyma.io/docs/intro deploy/deploy.sh
 ```
-
-`deploy/deploy.sh` builds with `DOCS_BASE_URL=/` and
-`DOCS_URL=https://testnet.docs.dyma.io`, so the testnet build works at the root.
-The GitHub Pages workflow sets neither → keeps `/dyma-docs/` unchanged (no
-regression).
 
 ## One-time setup
 
 ```bash
 # as user dyma
-cd /home/dyma
-git clone git@github.com:Dyma-IO/dyma-docs.git testnet.docs.dyma.io
-cd testnet.docs.dyma.io
-./deploy/deploy.sh          # builds ./build; nginx already points at it
+mkdir -p /home/dyma/testnet.docs.dyma.io
+git clone git@github.com:Dyma-IO/dyma-docs.git /home/dyma/testnet.docs.dyma.io/repo
+/home/dyma/testnet.docs.dyma.io/repo/deploy/deploy.sh
+
+sudo cp /home/dyma/testnet.docs.dyma.io/repo/deploy/nginx/docs.conf /etc/nginx/sites-available/testnet.docs.dyma.io
+sudo ln -s /etc/nginx/sites-available/testnet.docs.dyma.io /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+sudo certbot --nginx -d testnet.docs.dyma.io
 ```
 
-No `.env`, no `pm2` — nothing else. nginx serves `build/` as soon as it exists.
+Moving from the old layout (the checkout itself was served from `build/`): move the
+old directory aside, clone into `APP_ROOT/repo`, deploy once, then point the nginx
+`root` at `$APP_ROOT/current/build` ([`nginx/docs.conf`](nginx/docs.conf)).
 
-## Recurring deploy
+## baseUrl
 
-```bash
-ssh dyma@88.99.211.113 'cd /home/dyma/testnet.docs.dyma.io && ./deploy/deploy.sh'
-```
-
-Override per-run if needed, e.g. `DOCS_BASE_URL=/ DOCS_URL=https://testnet.docs.dyma.io ./deploy/deploy.sh`.
+The committed config targets GitHub Pages (`url=https://dyma-io.github.io`,
+`baseUrl=/dyma-docs/`) and reads `DOCS_URL` / `DOCS_BASE_URL` from the environment.
+A subdomain root needs `DOCS_BASE_URL=/`, which is this script's default.
 
 ## Verify
 
 ```bash
-ls build/index.html                        # build produced
-curl -I https://testnet.docs.dyma.io       # 200
-curl -s https://testnet.docs.dyma.io | grep -o '/assets/[^"]*' | head
-# asset paths must be root-relative (/assets/...), NOT /dyma-docs/assets/...
+deploy/deploy.sh --status
+curl -sI https://testnet.docs.dyma.io/docs/intro      # 200
+curl -s https://testnet.docs.dyma.io | grep -o '/assets/[^"]*' | head -3   # root-relative assets
 ```
-
-Open the site and click around — if the page is blank / assets 404 under
-`/dyma-docs/...`, the build used the wrong baseUrl → re-run deploy.sh (which sets
-`DOCS_BASE_URL=/`).
-
-## Gotchas
-
-- **Static, no PM2** — nginx serves `build/` from disk; no process to reload.
-- **Rebuild wipes `build/`** briefly during `docusaurus build` — acceptable for
-  testnet; for zero-downtime, build to a temp dir and swap (not done here).
-- **`onBrokenLinks: 'throw'`** — a broken internal link fails the build. Fix the
-  link, not the deploy.
-- **Keep devDependencies** — `npm ci` (not `--production`); Docusaurus builds with them.
