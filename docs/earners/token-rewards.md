@@ -53,8 +53,9 @@ earner with the same points (or an equal split), Dyma fee 0 (the default):
 | 10 | 100,000 SAF | 1,000,000 SAF | nothing |
 | 20 | 50,000 SAF | 1,000,000 SAF | nothing |
 
-Every share here is above the 1,000 SAF minimum, so everyone is paid. A maximum only pays out the
-whole pool when `earners × maximum ≥ pool`.
+Every share here is above the 1,000 SAF minimum, so everyone is paid. With equal shares, the whole
+pool is paid only when `earners × maximum ≥ pool`; when points differ, whatever a share has above
+the maximum also returns to the project, it is never handed to the other earners.
 
 ## What goes back to the project
 

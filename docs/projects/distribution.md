@@ -95,8 +95,9 @@ qualify:
    by points) or `D ÷ number of earners` (equal split), rounded down to the token's smallest unit.
    The units left over by the rounding are handed out one by one, to the largest remainders first,
    so the shares add up to D exactly.
-3. **Cap (water-filling).** The maximum payout is the cap. A share above the cap is pinned at the cap
-   and the rest of the pool is shared again between the others, until no share exceeds the cap.
+3. **Cap (hard maximum).** No earner receives more than the maximum payout. The part of a share
+   above the cap is **not** given to the other earners: it stays in the escrow and returns to you
+   at completion (manual mode: you simply don't pay it).
 4. **Minimum payout.** If some shares fall below the minimum, the smallest earners are dropped
    (earners with equal points are always treated alike) and the pool is shared again between the
    rest, keeping the largest group in which everyone gets at least the minimum.
@@ -133,15 +134,16 @@ byte order), so nothing is lost.
 | Earner | Points | Pro-rata share | Payout |
 |---|---|---|---|
 | Ada | 800 | 800 | **400** (capped) |
-| Bo | 150 | 150 → 450 after Ada's excess is shared | **400** (capped) |
-| Chi | 50 | 50 → 200 | **200** |
+| Bo | 150 | 150 | **150** |
+| Chi | 50 | 50 | **50** |
 
-Ada's excess is shared between Bo and Chi (150 : 50); Bo's new share passes the cap too, so the
-rest goes to Chi. The whole pool is paid.
+Ada's share is cut to the 400 maximum. The 400 above it is not shared out to Bo and Chi: 600 is
+paid and **400 returns to you** at completion.
 
 **4. Maximum binding for everyone.** Pool 1,000, maximum 250 (a 25% cap), two earners (70 and 30
-points): each receives 250, and the **500 left over returns to you** at completion. A cap only pays
-out the full pool when `earners × cap ≥ pool`.
+points): each receives 250, and the **500 left over returns to you** at completion. The pool is
+paid in full only when no earner's share is above the maximum; with equal shares that means at
+least `pool ÷ maximum` earners.
 
 **5. Minimum payout 1 USDC on a 10 USDC pool.**
 
