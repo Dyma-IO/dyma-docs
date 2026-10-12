@@ -1,26 +1,30 @@
 ---
-sidebar_position: 7
+sidebar_position: 8
 ---
 
 # Database
 
-Dyma uses **PostgreSQL 16** (Hetzner-hosted in production) with **Prisma ORM** in [`dyma-api`](https://github.com/Dyma-IO/dyma-api). Redis backs realtime pub/sub, rate limits, and BullMQ workers.
+Dyma uses **PostgreSQL 16** with **Prisma 6** in [`dyma-api`](https://github.com/Dyma-IO/dyma-api).
+Redis backs caching, nonces, pub/sub, rate limits and BullMQ queues.
 
 ## Local development
 
 ```bash
-cd dyma-api
-docker compose up -d
-cp .env.example .env
-npx prisma migrate dev
-npx prisma db seed
+# dyma-shared must sit next to dyma-api and be built
+cd ../dyma-shared && npm install && npm run build && cd ../dyma-api
+
+docker compose up -d                 # Postgres :5434, Redis :6380 (+ --profile s3 for local S3)
+cp .env.example .env                 # set JWT_SECRET and CREDENTIALS_MASTER_KEY (openssl rand -hex 32)
+npm install
+npm run prisma:generate
+npm run prisma:migrate               # dev only
+npm run prisma:seed                  # catalog every environment needs
+FILES_DRIVER=local npm run prisma:seed:demo   # optional demo data
 npm run start:dev
 ```
 
-Default local ports (when host ports conflict):
-
 | Service | URL |
-|---------|-----|
+|---|---|
 | Postgres | `postgresql://dyma:dyma@localhost:5434/dyma` |
 | Redis | `redis://localhost:6380` |
 | API | `http://localhost:4000/v1` |
@@ -28,45 +32,44 @@ Default local ports (when host ports conflict):
 
 ## Schema domains
 
-| Domain | Tables | Purpose |
-|--------|--------|---------|
-| Identity | `users`, `wallets`, `user_emails`, `oauth_accounts` | Wallet-first auth; encrypted email |
-| RBAC | `roles`, `permissions`, `role_permissions`, `user_roles`, `project_members` | Platform and project roles |
-| Platform config | `platform_settings`, `feature_flags`, `platform_credentials` | Admin-managed keys (AES-256-GCM) |
-| Catalog | `task_types`, `project_categories`, `quest_categories`, `tags` | Dynamic task catalog |
-| Pricing | `plans`, `subscriptions`, `usage_counters` | Plans, quotas, billing |
-| Content | `projects`, `campaigns`, `quests` | Project → Campaign → Quest |
-| Submissions | `submissions`, `verification_attempts`, `moderation_queue` | Verification state machine |
-| Files | `files`, `submission_files` | Hetzner S3 metadata |
-| SEO / OG | `seo_profiles`, `og_templates`, `og_assets` | Per-entity SEO and OG renders |
-| AI | `ai_providers`, `ai_prompt_templates`, `ai_generation_logs` | Admin prompts (no PII in logs) |
-| API access | `api_keys` | Hashed project/platform keys |
-| Audit | `audit_logs` | Credential rotation, admin actions |
-| Notifications | `notification_preferences`, `notification_outbox` | SES email queue |
+| Domain | Main tables |
+|---|---|
+| Identity | `users`, `wallets`, `user_emails`, `oauth_accounts` |
+| Access | `roles`, `permissions`, `user_roles`, `project_members`, `admin_users`, `api_keys` |
+| Platform config | `platform_settings`, `platform_credentials` (AES-256-GCM), `chains`, `chain_contracts` |
+| Catalog | `task_types`, `project_categories`, `quest_categories`, `tags` |
+| Content | `projects`, `campaigns`, `quests` |
+| Submissions | `submissions`, `verification_attempts`, `moderation_queue`, `chain_tx_claims` |
+| Distribution | `campaign_distributions`, `campaign_escrows`, `campaign_allocations`, `chain_operations` |
+| Billing | `plans`, `subscriptions`, `usage_counters`, `invoices`, `payment_intents`, `billing_payment_txs` |
+| Engagement | `promotions`, `platform_broadcasts`, `announcements`, `notifications`, `admin_notifications` |
+| Files, SEO | `files`, `submission_files`, `seo_profiles`, `og_templates` |
+| Audit | `audit_logs` |
 
 ## Migrations
 
 | Command | When |
-|---------|------|
-| `npx prisma migrate dev` | Local schema changes |
-| `npx prisma migrate deploy` | Staging / production (Hetzner) |
-| `npx prisma db seed` | Seed plans, 67 task types, roles, default OG template |
+|---|---|
+| `npm run prisma:migrate` (`prisma migrate dev`) | local schema changes only |
+| `npm run prisma:deploy` (`prisma migrate deploy`) | servers; the deploy script runs it after a successful build and a backup |
+| `npx prisma migrate diff --from-url "$DATABASE_URL" --to-schema-datamodel prisma/schema.prisma --exit-code` | CI: the migrated database must equal the schema |
 
-## Seed data
+Migrations run while the previous release still serves: keep them backward compatible.
 
-- **Plans:** Free, Starter, Growth, Pro, Enterprise
-- **Task types:** imported from `@dyma-io/shared` `TASK_TYPE_CATALOG`
-- **Roles:** `super_admin`, `dyma_moderator`, `project_admin`, `project_moderator`
-- **OG template:** default 1200×630 layout with non-disableable Dyma logo
+## Seeds
 
-## Production operations (Hetzner)
+- `npm run prisma:seed` — plans, roles and permissions, task types (from `@dyma-io/shared`),
+  categories, tags, the default card template, Safrochain mainnet and testnet chains, moderation and
+  security settings, the bootstrap super admin. Re-running is safe: admin edits are kept and the
+  bootstrap password is only reset with `ADMIN_BOOTSTRAP_RESET=true`.
+- `npm run prisma:seed:demo` — demo projects, campaigns, quests, personas (`*@demo.dyma.io`, shared
+  password), streaks, lucky draws, a manual USDC campaign, an ended campaign with partial payouts,
+  promotions, broadcasts, invoices. Works without S3 (`FILES_DRIVER=local`,
+  `DEMO_IMAGES_OFFLINE=true`). Never on production.
 
-- TLS required for Postgres connections
-- App DB user with least privilege (no superuser)
-- Daily backups: Hetzner snapshots + `pg_dump` to object storage
-- Optional connection pooling via PgBouncer or Prisma Accelerate
-- Redis key namespaces: `cache:`, `ratelimit:`, `pubsub:`, `queue:`
+## Production operations
 
-## Environment variables
-
-See `dyma-api/.env.example` for `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `CREDENTIALS_MASTER_KEY`, and integration fallbacks.
+- TLS to Postgres when it is not local; an application user without superuser rights.
+- Nightly `pg_dump` to object storage and a tested restore; the deploy script also dumps before
+  each release that migrates.
+- `BULLMQ_PREFIX` per environment when Redis is shared.

@@ -1,43 +1,44 @@
 ---
-sidebar_position: 4
+sidebar_position: 6
 ---
 
-# Reputation and rewards
+# Points, XP and reputation
 
 ## DP — Dyma Points
 
-Universal reward currency and season scoring unit.
+Points are Dyma's score for verified work.
 
-- Default reward for most campaigns
-- Drives ranks, multipliers, and unlock tiers
-- May convert to project tokens per campaign rules
-- Partner campaigns can additionally escrow real assets (USDC, ATOM, TIA, SAF, OSMO)
+- Each quest awards a number of points (and XP), set by the project.
+- They are credited **at verification**, and the amount is stored on the submission at that moment.
+- An earner's points in a campaign are the sum over their verified submissions in that campaign;
+  their total is the sum over all campaigns. Leaderboards, profiles, analytics, exports and reward
+  splits all use this same definition (counted per account, not per wallet).
+- Points are not a token: they are not transferable and have no on-chain form. Token rewards come
+  from a campaign's own pool, split in proportion to points
+  ([Distribution modes and the split](../projects/distribution)).
 
-## DR — Dima Reputation
+## XP
 
-On-chain portable credentials represented as an **upgradable Soulbound NFT** on Safrochain.
+XP is credited alongside points with the same rule and is shown on profiles.
 
-- Accumulates from validated tasks across the platform
-- Levels provide multipliers and exclusive campaign access
-- Composite score uses task quality, sybil confidence, and consistency
-- Mint or upgrade may require gas on Safrochain
+## Daily streaks
 
-## Reward models for projects
+The daily check-in quest tracks a streak of consecutive UTC days. The streak is displayed; it does
+**not** multiply points.
 
-| Model | Description |
-|-------|-------------|
-| **DP model (recommended)** | Fast onboarding; project handles final token distribution |
-| **IBC model** | Requires IBC to Safrochain; tokens in escrow contract |
-| **Token factory** | Mint project token on Safrochain for branded distribution |
+## Not built
 
-## Seasons, guilds, streaks
+The earlier design described features that do not exist in the product today:
 
-- **Seasons** — Time-boxed leaderboards with resets and featured campaigns
-- **Guilds** — Team streaks, guild ladder, referral cuts on invitee points
-- **Streaks** — Daily completion multipliers for consistent contributors
+| Feature | Status |
+|---|---|
+| DR (Dima Reputation) soulbound NFT and reputation levels | not implemented (`dyma-contracts` holds only a placeholder) |
+| Seasons and season leaderboards | not implemented |
+| Guilds and guild referral cuts | not implemented |
+| Streak multipliers | not implemented |
+| Conversion of points into tokens | not part of the platform; projects distribute their own pools |
 
 ## Privacy
 
-Emails and phone numbers are **never** exported to projects or included in REST verification payloads. Plans with `data_export` may export anonymized wallets and aggregate stats only.
-
-Report data concerns via [Discussions](https://github.com/orgs/Dyma-IO/discussions) or the security contact in [Contributing](../developers/contributing).
+Projects never receive earners' e-mail addresses: exports and REST verification calls identify
+earners by public id, username and wallets only.
