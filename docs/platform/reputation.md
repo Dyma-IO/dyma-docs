@@ -14,7 +14,7 @@ Points are Dyma's score for verified work.
   their total is the sum over all campaigns. Leaderboards, profiles, analytics, exports and reward
   splits all use this same definition (counted per account, not per wallet).
 - Points are not a token: they are not transferable and have no on-chain form. Token rewards come
-  from a campaign's own pool, split in proportion to points
+  from a campaign's own pool, split in proportion to points by default
   ([Distribution modes and the split](../projects/distribution)).
 
 ## XP

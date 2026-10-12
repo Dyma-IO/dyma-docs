@@ -4,14 +4,14 @@ sidebar_position: 5
 
 # Funding the escrow, step by step
 
-Automatic campaigns lock their pool **before** they are submitted for review. Funding is one
-transaction signed by the project's wallet; that wallet becomes the escrow **owner** and receives
-every refund.
+Automatic campaigns lock their pool **before** they can launch. Funding is one transaction signed by
+the project's wallet; that wallet becomes the escrow **owner** and receives every refund.
 
 ## Before you start
 
 - A Dyma escrow factory must be deployed on the token's chain (see
-  [Deployments](../contracts/deployments)); Studio says "Funding not available" otherwise.
+  [Deployments](../contracts/deployments)); Studio says "Funding not available" otherwise. The
+  escrow runs on Safrochain today; for a token on another network, request it from Studio.
 - The reward token is a bank token (SAF, IBC tokens such as USDC, tokenfactory tokens) or a CW20
   contract whose code Dyma's governance approved. Prefer tokens without an issuer admin
   ([Token admin risk](./automatic-escrow#token-admin-risk)).
@@ -23,10 +23,11 @@ every refund.
 ## Steps
 
 1. **Rewards & distribution.** Choose *Automatic*, the reward token, the pool, and optionally the
-   minimum payout, the cap per earner, the review grace (1–72 h) and the challenge window
+   [split rules](./distribution#split-rules) (minimum and maximum payout per earner, top N, minimum
+   points, split by points or equal), the review grace (1–72 h) and the challenge window
    (1 h–7 days). Save.
 2. **Basics.** Set both the start and the end date. The end must be at least two hours away.
-3. **Fund escrow.** Connect the wallet that will own the escrow (Keplr, Leap, Cosmostation,
+3. **Fund escrow.** Connect the wallet that will own the escrow (Zunia, Keplr, Cosmostation,
    EightSaf, or WalletConnect), check the summary — pool, dates, review grace, challenge window,
    where refunds go — and choose to lock the pool.
 4. Dyma signs a **one-hour funding ticket**: a message binding the chain, the factory, your
@@ -37,7 +38,8 @@ every refund.
    checks the ticket, creates your escrow and moves the pool into it in the same transaction.
 6. Studio confirms the transaction with Dyma, which reads the factory event and registry and records
    the escrow. The campaign page then shows the contract, the funding transaction and the balance.
-7. **Review & launch.** Submit the campaign. Dates, token and pool are now fixed.
+7. **Review & launch.** Submit the campaign. Dates, token, pool and split rules have been fixed since
+   the pool was locked.
 
 Signed it elsewhere (for example from a multisig or the CLI)? Paste the transaction hash in the
 funding card; Dyma verifies it the same way.

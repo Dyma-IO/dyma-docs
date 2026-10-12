@@ -41,10 +41,11 @@ Project (Studio) ─ creates ─► Campaign ─ contains ─► Quests
    reviews the campaign before it goes live (plans with approval bypass skip the queue).
 2. Earners sign in (wallet, Google, X, GitHub, Discord or e-mail), complete quests, and get their
    points as soon as each quest is verified.
-3. When the campaign ends, the reward pool is split **pro rata to points**:
+3. When the campaign ends, the reward pool is split **pro rata to points** (or equally, if the
+   project chose so), under the split rules the project set for the campaign:
    - **Manual distribution** — the project pays, with Dyma's payout assistant (exact amounts,
      batched transfers it signs in its own wallet).
-   - **Automatic distribution** — the pool is locked up front in Dyma's open-source CosmWasm escrow
+   - **Automatic distribution** — the pool is locked up front in Dyma's CosmWasm escrow
      on Safrochain, and the contract pays everyone after a public challenge window.
 
 ## What is live and what is not
@@ -53,9 +54,9 @@ Project (Studio) ─ creates ─► Campaign ─ contains ─► Quests
 |---|---|
 | Quests across social, on-chain, learn, content and engagement task types; daily check-in and lucky draw | A standalone chain indexer service (on-chain quests are verified by the API through chain REST endpoints) |
 | Points (DP) and XP credited at verification, leaderboards | DR reputation NFT, seasons, guilds, streak multipliers |
-| Manual and automatic (escrow) token distribution | Escrow contracts deployed on mainnet (see [deployments](./contracts/deployments)) |
+| Manual and automatic (escrow) token distribution, escrow live on Safrochain mainnet (see [deployments](./contracts/deployments)) | Escrow on networks other than Safrochain (projects can request it from Studio) |
 | Plans paid in USDC on Safrochain | Card payments (Stripe code kept, switched off) |
-| Wallets: Keplr, Leap, Cosmostation, EightSaf, WalletConnect | |
+| Wallets: Zunia, Keplr, Cosmostation, EightSaf, WalletConnect | |
 
 The escrow contracts have had an internal pre-audit review; **an external audit is still
 pending**. See [Security model](./contracts/security-model).

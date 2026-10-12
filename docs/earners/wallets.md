@@ -12,8 +12,8 @@ sign a message, not a transaction.
 
 | Wallet | Where | Notes |
 |---|---|---|
-| **Keplr** | browser extension, Keplr Mobile through WalletConnect | the default Cosmos wallet; if Leap is set as your default wallet it may answer in Keplr's place |
-| **Leap** | browser extension, Leap Mobile through WalletConnect | |
+| **Zunia** | browser extension ([Chrome Web Store](https://chromewebstore.google.com/detail/zunia/ngokakoekdogobjmokipglbcclelgajk)); mobile signing coming soon | listed first; works inside the Zunia app's browser too |
+| **Keplr** | browser extension, Keplr Mobile through WalletConnect | the default Cosmos wallet |
 | **Cosmostation** | browser extension, mobile through WalletConnect | |
 | **EightSaf** | browser extension | Safrochain only |
 | **WalletConnect** | any WalletConnect v2 Cosmos wallet on your phone | scan the QR code on desktop, or open the deep link on mobile; offered when the app has a WalletConnect project configured |
@@ -66,6 +66,9 @@ You are left out of a split (and told why on the campaign page) when:
 | Wallet cannot receive escrow payouts | the address is one the escrow refuses (a contract or a role address of the escrow) |
 | Project team member | members of the project do not take part in its pool |
 | Account suspended | |
+
+A campaign's own split rules can also leave you out: fewer points than its minimum, or not among its
+top N earners. See [Token rewards](./token-rewards#the-campaigns-split-rules).
 
 ## Safety
 

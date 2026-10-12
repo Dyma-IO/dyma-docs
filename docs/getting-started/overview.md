@@ -11,7 +11,7 @@ Dyma serves three audiences. Pick the path that matches your role.
 Use the earner app ([app.dyma.io](https://app.dyma.io)) to discover campaigns, complete quests
 and collect points and token rewards.
 
-1. Sign in with a wallet (Keplr, Leap, Cosmostation, EightSaf, or a mobile wallet through
+1. Sign in with a wallet (Zunia, Keplr, Cosmostation, EightSaf, or a mobile wallet through
    WalletConnect), or with Google, X, GitHub, Discord or an e-mail code.
 2. Open a live campaign and complete its quests. Each quest says how it is checked.
 3. Points are credited **as soon as a quest is verified** — instantly for automatic checks, after

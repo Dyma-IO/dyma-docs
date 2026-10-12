@@ -31,7 +31,7 @@ USDC does not.
    | Memo | `DYMA-7K2M9QXA` — unique to this request |
 
 3. Pay it, either way:
-   - **With your wallet** (Keplr, Leap, Cosmostation, EightSaf, WalletConnect): Studio builds the
+   - **With your wallet** (Zunia, Keplr, Cosmostation, EightSaf, WalletConnect): Studio builds the
      transfer with the memo; you approve it.
    - **Manual transfer** from any Safrochain wallet: send the exact amount of the accepted USDC to
      the treasury **with the memo**, then paste the transaction hash in Studio. Pasting is optional:
