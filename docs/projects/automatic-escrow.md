@@ -8,8 +8,9 @@ In automatic mode the pool is locked **before** the campaign goes live in a camp
 CosmWasm contract created for your campaign by Dyma's escrow factory on Safrochain. You lock it with
 a transaction signed in your wallet, and the campaign cannot launch until the pool is locked
 ([step by step](./funding-step-by-step)). After the campaign, Dyma's operator commits the split, a
-public challenge window opens, and then the contract pays every earner in the split. Refunds and
-leftovers can only ever go to **the wallet that funded it** (the escrow owner).
+public challenge window opens, and then **each earner claims their share** from the wallet committed
+for them, until the claim deadline you chose. Refunds, leftovers and unclaimed shares can only ever
+go to **the wallet that funded it** (the escrow owner).
 
 The escrow runs on Safrochain today. Projects whose reward token is on another network can request
 it for that network from Studio.
@@ -23,8 +24,8 @@ small internal canary amounts on mainnet. Read [Security model](../contracts/sec
 ## Timeline
 
 ```
-fund ─► UPCOMING ─starts_at─► ACTIVE ─ends_at─► ENDED ─commit─► COMMITTING ─finalize─► CHALLENGE ─► DISTRIBUTING ─► COMPLETED
-          │ cancel (owner, before start)          │      review grace                     │ dispute (owner)      payouts + claims
+fund ─► UPCOMING ─starts_at─► ACTIVE ─ends_at─► ENDED ─commit─► COMMITTING ─finalize─► CHALLENGE ─► DISTRIBUTING ─close─► COMPLETED
+          │ cancel (owner, before start)          │      review grace                     │ dispute (owner)      earners claim
           ▼                                       │                                       ▼
       CANCELLED ◄── guardian cancel (any time before finalize)                         DISPUTED ─► resolved / lapsed
                                                   └─ not finalized by the commit deadline ─► EXPIRED ─► reclaim (full refund)
@@ -37,9 +38,8 @@ fund ─► UPCOMING ─starts_at─► ACTIVE ─ends_at─► ENDED ─commit�
 | Review grace | end date + 1–72 h (default 24 h) | Dyma | pending reviews are decided; payout addresses are fixed |
 | Commit + finalize | after the grace, before the **commit deadline** | Dyma's operator | the sorted allocation is written in batches; finalize snapshots the balance and opens the challenge window |
 | Challenge window | 1 h–7 days (default 24 h) | everyone watches | you can **dispute**; Dyma's guardian can **reject** a wrong allocation |
-| Distribute | after the window | anyone (Dyma's operator runs it and pays the gas) | payouts in batches of up to 250 earners, until **completed** |
-| Claim | until the **claim deadline** (default 180 days after payouts open) | each earner | pays their own entry, including a payout that failed |
-| Completion | when every entry is processed | the last crank | the fee (0 by default) is charged and **the leftover is refunded to you** |
+| Claim | from the end of the window until the **claim deadline** (the claim window you chose: 30–365 days, default 30) | each earner, from their committed wallet | pays that earner's share; nothing is sent automatically |
+| Close ("Withdraw unclaimed tokens") | after the claim deadline, or as soon as every share is claimed | you (anyone can send it; the funds only go to you and the treasury) | the fee (0 by default) is charged on what was claimed and **everything else is refunded to you**: unclaimed shares, dust, cap overflow, the unused fee reserve |
 
 All deadlines after the end date run on the escrow's own clock, which stops while the escrow is
 paused (see [Pauses](#pauses)).
@@ -55,8 +55,33 @@ funded the escrow, then Studio confirms it from the transaction.
 | Cancel | before the start date | refunds the **whole live balance** to you, no fee. The campaign can then be funded again |
 | Dispute | during the challenge window, once per allocation version | freezes payouts while Dyma's guardian looks at it (reason, 1–280 characters) |
 | Reclaim | once the escrow is **expired** | refunds the whole balance to you |
+| Withdraw unclaimed tokens | once the claim deadline passed, or every share is claimed | `close`: completes the escrow and refunds what was not claimed (see the timeline) |
+| Withdraw remaining tokens | after completion and the claim deadline | `sweep_leftover`: tokens that arrived afterwards |
 
 You cannot take the pool back after the start date: that is the guarantee earners rely on.
+
+## Claim-only payouts
+
+Escrows created since October 2026 (escrow code 0.2.0) pay **by claim only**:
+
+- **A Wallet Connect quest is required.** The campaign must contain a Wallet Connect quest on the
+  escrow's network (Safrochain today). Studio refuses to save the distribution as automatic, or to
+  lock the pool, without it, and it shows an **Add Wallet Connect quest** shortcut. While the
+  escrow is active you cannot delete or archive the last such quest, nor move it to another chain.
+- **Only earners who completed it are paid.** Everyone else is left out of the split with the
+  reason "Wallet quest of the payout network not completed". The wallet they connected is the one
+  committed, and the only one that can sign the claim.
+- **The claim window** is a setting of the pool (30–365 days, default 30), fixed once the pool is
+  locked. Earners are notified when claims open and reminded before the deadline; you are notified
+  when the window is over.
+- **Closing.** After the deadline (or once everyone claimed), **Rewards → Escrow & payouts**
+  offers **Withdraw unclaimed tokens**, with the amount that will come back. Until you close it,
+  the escrow keeps the unclaimed tokens; nobody else can take them.
+
+Escrows funded before claim-only payouts keep the rules they were created with (**push**: Dyma's
+operator sends every payout after the challenge window), unless Dyma migrated a specific escrow to
+claim mode before its split was published, in which case its campaign page says so. Studio shows
+which mode an escrow uses.
 
 ## Disputes and rejections
 
@@ -93,7 +118,7 @@ incident.
   that was running resumes for exactly the time that was left. A pause can neither force an expiry
   nor make a challenge window lapse.
 - A pause before the end date only blocks top-ups.
-- Paused escrows refuse top-ups, commits, finalize, payouts, claims and retries. A pause never
+- Paused escrows refuse top-ups, commits, finalize, payouts, claims, closes and retries. A pause never
   blocks cancel, reclaim, sweep, stray-asset refunds, disputes, rejections or dispute decisions.
 - The pauser key (a hot key used by Dyma's monitoring) is rate-limited: one pause at a time, at most
   1 day each by default, a cooldown between pauses, and at most 2 × that per escrow in total. Longer
@@ -102,13 +127,16 @@ incident.
 
 ## Failed payouts and leftovers
 
-- Each payout is isolated: a recipient whose transfer fails (for example a blocked module address)
-  does not stop the batch. The amount stays **reserved** for that earner, who can `claim` it, and
-  anyone can `retry_failed` until the claim deadline.
-- When the last entry is processed, the escrow charges the fee (on what earners actually received)
-  and automatically refunds you everything else: rounding dust, amounts skipped under the minimum
-  payout, amounts above the maximum payout, the unused fee reserve, tokens that arrived after funding.
-- After the claim deadline, `sweep_leftover` sends payouts that are still unclaimed back to you.
+- **Claim escrows**: a claim is a plain transfer to the earner who sends it, so there are no failed
+  payouts. A share below the minimum payout cannot be claimed and stays in the leftover. When you
+  close the escrow, it charges the fee on what was claimed and refunds you everything else:
+  unclaimed shares, rounding dust, amounts above the maximum payout, the unused fee reserve, tokens
+  that arrived after funding.
+- **Push escrows**: each payout is isolated, so a recipient whose transfer fails (for example a
+  blocked module address) does not stop the batch. The amount stays **reserved** for that earner,
+  who can `claim` it, and anyone can `retry_failed` until the claim deadline. When the last entry is
+  processed the escrow charges the fee and refunds you everything else automatically; after the
+  claim deadline, `sweep_leftover` sends payouts that are still unclaimed back to you.
 - If the escrow expires (the split was not finalized in time), `reclaim_expired` returns the whole
   pool to you (see [If Dyma never finalizes](#if-dyma-never-finalizes)).
 - Tokens other than the pool asset sent to the escrow by mistake can be returned to you at any time
@@ -138,7 +166,7 @@ Prefer IBC stablecoins (USDC) or tokens whose admin was renounced.
 | Guardian | Dyma 2-of-3 multisig | reject an allocation, resolve a dispute, cancel before finalize, pause and unpause |
 | Pauser | Dyma hot key | rate-limited pauses |
 | Upgrade admin | Dyma 3-of-5 multisig (or none) | migrate the contract code (security fixes) |
-| Anyone | | distribute, retry failed payouts, reclaim an expired escrow, sweep after the claim deadline |
+| Anyone | | close a claim escrow (after the deadline or once everything is claimed), distribute and retry failed payouts (push escrows), reclaim an expired escrow, sweep after the claim deadline |
 | Earners | their payout address | claim their own entry |
 
 The operator, guardian and pauser are read from the factory at call time, so Dyma can rotate a

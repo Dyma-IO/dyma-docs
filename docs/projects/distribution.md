@@ -13,13 +13,14 @@ paid in the wizard's **Rewards & distribution** step.
 | | Manual | Automatic |
 |---|---|---|
 | Who holds the pool | you, until you pay | an escrow contract on Safrochain, from before launch |
-| Who pays | you, with Studio's payout assistant ([Manual payouts](./manual-payouts)) | the contract, after a challenge window ([Automatic distribution](./automatic-escrow)) |
+| Who pays | you, with Studio's payout assistant ([Manual payouts](./manual-payouts)) | the contract, after a challenge window: each earner claims their share within the claim window you set ([Automatic distribution](./automatic-escrow)) |
 | Funding | none up front | you lock the pool with a transaction signed in your wallet; the campaign cannot launch until it is locked ([Funding](./funding-step-by-step)) |
 | Dates | optional (open-ended allowed) | start and end required, fixed once funded |
 | Split rules | apply when Dyma computes the split | frozen once the pool is locked |
 | Tokens | any registered reward token | bank tokens (native, IBC such as USDC, tokenfactory) and approved CW20 codes on a chain where Dyma's escrow is deployed (Safrochain today) |
+| Required quest | none | a Wallet Connect quest on the escrow's network; only earners who completed it are paid |
 | Earners see | "Paid by *your project*" and the split rules | an **Escrow** badge, the split rules, the contract address and its live balance |
-| Network fees | you pay your transfers | Dyma's operator pays the payout transactions; you pay the funding transaction |
+| Network fees | you pay your transfers | you pay the funding transaction; each earner pays their own claim (Dyma's operator commits and finalizes the split) |
 | Dyma fee | none | `fee_bps` set by Dyma, **0 by default** (capped at 10% by the contracts) |
 
 Both modes compute **exactly the same split**, at the same time, with the same code.
@@ -41,6 +42,8 @@ the escrow for that network from Studio.
 | Minimum payout | 0.01 token (`10^(decimals−2)` base units) | ≥ 0 | both |
 | Review grace | 24 hours | 1–72 hours | both |
 | Challenge window | 24 hours | 1 hour–7 days | automatic |
+| Claim window | 30 days | 30–365 days (the factory's limits) | automatic |
+| Reputation boost | off | on or off | both |
 
 ## Split rules
 
@@ -55,6 +58,10 @@ that are set).
   1,000,000 SAF pool with a maximum of 100,000, ten earners can each receive 100,000; with two
   earners, each still receives 100,000, never more, and the other 800,000 returns to you.
 - **Minimum payout**: an earner whose share is below it is not paid.
+- **Reputation boost**: each qualifying earner's weight is multiplied by the boost of their
+  [Dyma Reputation](../platform/reputation#tiers-and-boosts) tier (x1.00 to x2.00 by default) when
+  the split is computed. Minimum points and top N still use raw points. The preview shows each
+  earner's tier and boost.
 
 In automatic mode the rules are frozen when you lock the pool: the escrow is created with the
 maximum (as `max_share_bps`, so a top-up raises it in proportion) and the minimum payout, and no
@@ -68,7 +75,9 @@ rules.
   count. Use the grace to clear your review queue; anything still pending after it is left out.
 - Excluded from the split: project members, suspended accounts, earners without a usable payout
   address on the token's chain, addresses shared by two accounts, and addresses the escrow refuses
-  (contracts and the escrow's own role addresses). Earners are told why on their campaign page.
+  (contracts and the escrow's own role addresses). In a claim-only escrow, earners who did not
+  complete the campaign's Wallet Connect quest on the escrow's network are excluded too. Earners
+  are told why on their campaign page.
 - Your split rules can leave more earners out: those below the minimum points, and those outside the
   top N.
 
@@ -95,9 +104,11 @@ qualify:
    by points) or `D ÷ number of earners` (equal split), rounded down to the token's smallest unit.
    The units left over by the rounding are handed out one by one, to the largest remainders first,
    so the shares add up to D exactly.
+   With the **reputation boost** on, each earner's points (or 1, for an equal split) are first
+   multiplied by their tier's boost: `points × boost_bps` instead of `points`.
 3. **Cap (hard maximum).** No earner receives more than the maximum payout. The part of a share
    above the cap is **not** given to the other earners: it stays in the escrow and returns to you
-   at completion (manual mode: you simply don't pay it).
+   at completion or when you close a claim escrow (manual mode: you simply don't pay it).
 4. **Minimum payout.** If some shares fall below the minimum, the smallest earners are dropped
    (earners with equal points are always treated alike) and the pool is shared again between the
    rest, keeping the largest group in which everyone gets at least the minimum.
@@ -182,8 +193,9 @@ moments:
 
 | When | What comes back | How |
 |---|---|---|
-| At completion | rounding dust, skipped amounts, cap overflow, the unused fee reserve, and the whole pool if nobody qualifies | automatically, in the transaction that completes the escrow |
-| After the claim deadline | payouts still unclaimed (failed payouts stay reserved for their earners until then) | `sweep_leftover`, which anyone can call |
+| When you close a claim escrow | every share nobody claimed, rounding dust, cap overflow, the unused fee reserve, and the whole pool if nobody qualifies | **Withdraw unclaimed tokens** (`close`), after the claim deadline or as soon as everything is claimed |
+| At completion (push escrows funded before claim-only payouts) | rounding dust, skipped amounts, cap overflow, the unused fee reserve, and the whole pool if nobody qualifies | automatically, in the transaction that completes the escrow |
+| After the claim deadline | push escrows: payouts still unclaimed (failed payouts stay reserved for their earners until then); any escrow: tokens that arrived after completion | `sweep_leftover`, which anyone can call |
 | If the split expires | the whole pool, when Dyma did not finalize the split before the commit deadline | `reclaim_expired`, which anyone can call |
 
 See [Automatic distribution](./automatic-escrow) for the deadlines.

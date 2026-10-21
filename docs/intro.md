@@ -46,14 +46,15 @@ Project (Studio) ─ creates ─► Campaign ─ contains ─► Quests
    - **Manual distribution** — the project pays, with Dyma's payout assistant (exact amounts,
      batched transfers it signs in its own wallet).
    - **Automatic distribution** — the pool is locked up front in Dyma's CosmWasm escrow
-     on Safrochain, and the contract pays everyone after a public challenge window.
+     on Safrochain; after a public challenge window each earner claims their share from their
+     wallet, and the project takes back what was not claimed.
 
 ## What is live and what is not
 
 | Built | Not built yet |
 |---|---|
 | Quests across social, on-chain, learn, content and engagement task types; daily check-in and lucky draw | A standalone chain indexer service (on-chain quests are verified by the API through chain REST endpoints) |
-| Points (DP) and XP credited at verification, leaderboards | DR reputation NFT, seasons, guilds, streak multipliers |
+| Points (DP) and XP credited at verification, leaderboards; Dyma Reputation (DP conversion, tiers, boosts, soulbound badge); global referrals | Seasons, guilds, streak multipliers, reputation export over IBC |
 | Manual and automatic (escrow) token distribution, escrow live on Safrochain mainnet (see [deployments](./contracts/deployments)) | Escrow on networks other than Safrochain (projects can request it from Studio) |
 | Plans paid in USDC on Safrochain | Card payments (Stripe code kept, switched off) |
 | Wallets: Zunia, Keplr, Cosmostation, EightSaf, WalletConnect | |
