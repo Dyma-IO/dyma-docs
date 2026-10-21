@@ -6,7 +6,8 @@ sidebar_position: 2
 
 JSON is snake_case. Timestamps are nanosecond strings (`Timestamp`), amounts are `Uint128`
 strings, assets are `{"native":{"denom":"..."}}` or `{"cw20":{"address":"..."}}`. Unknown fields
-are rejected. The authoritative interface is the committed JSON schema of each contract (v0.1.0).
+are rejected. The authoritative interface is the committed JSON schema of each contract (factory
+0.1.0, escrow 0.2.0, reputation 0.1.0).
 
 ## Campaign ticket
 
@@ -86,8 +87,9 @@ factory `limits` and, for CW20, `cw20_funding`.
 | `dispute { reason }` | owner | challenge | no | once per version, 1–280 characters, never refunds |
 | `reject_allocations { reason }` | guardian | challenge, disputed (never after a payout) | no | discards the allocation, `version + 1`, back to ended, re-commit time granted (at most 2 extensions) |
 | `resolve_dispute { decision }` | guardian | disputed | no | `"keep_allocation"` (payouts start) or `"reject_allocation"` (as reject) |
-| `distribute { limit? }` | anyone | distributing | blocks | pays the next entries (≤ `max_distribute_batch`); the call that finds nothing left **completes**: fee, then leftover refund |
-| `claim {}` | a recipient | distributing (pending entry); distributing or completed before the claim deadline (failed entry) | blocks | pays the sender's own entry |
+| `distribute { limit? }` | anyone | distributing | blocks | **push escrows only** (`ClaimOnly` on claim escrows): pays the next entries (≤ `max_distribute_batch`); the call that finds nothing left **completes**: fee, then leftover refund |
+| `claim {}` | a recipient | claim escrows: distributing, before the claim deadline (`ClaimWindowClosed` after). Push escrows: distributing (pending entry); distributing or completed before the claim deadline (failed entry) | blocks | pays the sender's own entry (a plain transfer: a failing transfer reverts the claim) |
+| `close {}` | anyone | distributing, **claim escrows only** (`NotClaimMode` otherwise), once the claim deadline is reached or `paid_count ≥ entry_count` (an empty allocation included; `ClaimWindowOpen` before) | blocks | **completes**: the fee on what was claimed to the treasury, everything else to the owner; pending entries become `unclaimed` |
 | `retry_failed { addresses }` | anyone | distributing, completed, before the claim deadline | blocks | re-sends failed payouts (1–100) |
 | `reclaim_expired {}` | anyone | expired | no | whole balance to the owner |
 | `sweep_leftover {}` | anyone | cancelled, or completed after the claim deadline | no | remaining balance to the owner |
@@ -101,15 +103,29 @@ Every message except `top_up` (and `create_campaign` on the factory) is non-paya
 
 | Query | Response |
 |---|---|
-| `config {}` | parameters, `funding_attempt`, owner, factory, asset, `created_at`, `limits` (creation-time copy), `roles { operator, pauser, guardian, treasury }` (null if the factory cannot be read) |
-| `status {}` | `campaign_id`, `funding_attempt`, `phase`, `funded_total`, `balance`, `version`, `entry_count`, `total_points`, `last_committed`, `finalized { at, challenge_ends_at, claim_deadline, gross_balance, max_fee, distributable, cap, treasury, allocation_sha256, allocation_uri }`, `dispute { raised_at, reason, expires_at, resolved_at }`, `paid_count`, `paid_total`, `failed_count`, `failed_outstanding`, `skipped_count`, `skipped_total`, `fee_paid`, `refunded_total`, `cursor`, `deadlines { starts_at, ends_at, commit_deadline, claim_deadline }`, `paused`, `paused_until`, `frozen_secs`, `pauser_pause_left_secs`, `completed_at`, `cancelled_at` |
-| `allocation { address, version? }` | `{ address, version, points, amount, status }` — `amount` is null before finalize, projected while pending |
+| `config {}` | parameters, `funding_attempt`, owner, factory, asset, `created_at`, `limits` (creation-time copy), `roles { operator, pauser, guardian, treasury }` (null if the factory cannot be read), `payout_mode` (0.2.0) |
+| `status {}` | `campaign_id`, `funding_attempt`, `phase`, `funded_total`, `balance`, `version`, `entry_count`, `total_points`, `last_committed`, `finalized { at, challenge_ends_at, claim_deadline, gross_balance, max_fee, distributable, cap, treasury, allocation_sha256, allocation_uri }`, `dispute { raised_at, reason, expires_at, resolved_at }`, `paid_count`, `paid_total`, `failed_count`, `failed_outstanding`, `skipped_count`, `skipped_total`, `fee_paid`, `refunded_total`, `cursor`, `deadlines { starts_at, ends_at, commit_deadline, claim_deadline }`, `paused`, `paused_until`, `frozen_secs`, `pauser_pause_left_secs`, `completed_at`, `cancelled_at`, `payout_mode` (0.2.0) |
+| `allocation { address, version? }` | `{ address, version, points, amount, status }` — `amount` is null before finalize, projected while pending; `status` is `pending`, `paid`, `failed`, `skipped` or `unclaimed` (a claim escrow closed before the entry was claimed: `amount` went back to the owner) |
 | `allocations { start_after?, limit?, version? }` | `{ version, allocations }`, ascending by address (30, max 100); rejected versions stay readable |
 | `ownership {}` | `{ owner, pending_owner, pending_expiry }` |
 
 `phase` is one of `upcoming`, `active`, `ended`, `committing`, `challenge`, `disputed`,
 `distributing`, `completed`, `cancelled`, `expired`. Deadlines are real times **projected** from the
 escrow clock; re-read `status {}` for countdowns, since a pause moves them.
+
+### Payout modes
+
+`payout_mode` is `"claim"` for instances created by escrow 0.2.0 and `"push"` for 0.1.x
+instances. A 0.1.x instance (code 13 on `safrochain-1`) does not return the field: read a missing
+`payout_mode` as `push`. The factory picks the mode only through its `escrow_code_id` (which
+funding tickets bind); its instantiate message is unchanged.
+
+### Migration
+
+`migrate` (the instance's wasm admin only) requires the same contract name and a strictly greater
+version. The 0.1.x → 0.2.0 message is `{ "payout_mode"?: "push" | "claim" }` (`{}` stays valid and
+keeps the current mode, so a 0.1.x instance stays `push`). Changing the mode is accepted only before
+finalize (`PayoutModeLocked` afterwards). Balances, allocations and deadlines are never touched.
 
 ## Allocation file
 
@@ -118,3 +134,61 @@ committed entry, addresses lowercase and sorted bytewise, each line ending with 
 records it but cannot check it; anyone can, by paging `allocations {}`. Dyma serves the file at
 `GET /v1/discover/campaigns/:campaignId/allocation.json` (schema `dyma.escrow.allocation/v1`; Dyma
 commits planned payouts as weights, `weight_unit: "adjusted"`).
+
+## Reputation contract
+
+`dyma-reputation` 0.1.0: soulbound, CW721-compatible badges for Dyma Reputation tiers. Dyma computes
+scores off chain and signs attestations; the contract checks them and keeps one badge per account
+and per wallet.
+
+### Instantiate
+
+`{ name, symbol, admin, attester, tiers, base_uri? }`: `admin` is the contract owner (two-step
+ownership), `attester` the base64 33-byte compressed secp256k1 public key of Dyma's attestation key,
+`tiers` 1–32 entries `{ tier, name, min_score, boost_bps, image_uri }` strictly ascending by `tier`
+and `min_score`, `boost_bps` 10,000–50,000 and never decreasing. A badge's `token_uri` is
+`base_uri` + token id. On `safrochain-1` the tiers are Dyma's tiers 1–7 (Explorer to Mythic);
+Newcomer (tier 0) has no badge.
+
+### Attestation
+
+The raw JSON bytes Dyma signs (unknown fields rejected), submitted base64-encoded with a 64-byte
+compact low-S secp256k1 signature over `sha256(bytes)`:
+
+```json
+{"v":1,"chain_id":"safrochain-1","contract":"addr_safro1…","account":"<64 lowercase hex>",
+ "owner":"addr_safro1…","tier":3,"score":"3100","nonce":7,
+ "issued_at":"1792605600000000000","expires_at":"1792609200000000000"}
+```
+
+`account` is an opaque Dyma account reference; `nonce` strictly increases per account. Dyma's
+attestations are valid for 15 minutes.
+
+### Execute
+
+| Message | Who | Effect |
+|---|---|---|
+| `claim_badge { attestation, signature }` | the attested `owner` | checks the signature, `v`, chain, contract, `owner == sender`, expiry, tier and `score ≥ min_score`, `nonce > last_nonce`, revocation, and that the sender holds no badge of another account; burns the account's current badge and mints `dr-<serial>` to the sender. Refused while paused |
+| `burn { token_id }` | the holder | removes the badge |
+| `revoke_badge { account, reason }` | owner | burns the account's badge; attestations issued until then are refused |
+| `update_config { attester?, tiers?, base_uri?, paused? }` | owner | a new attester voids unused attestations; new tiers apply to new badges |
+| `set_ibc_bridge { bridge? }` | owner | the ICS-721 contract badges may leave through (none by default) |
+| `send_nft { contract, token_id, msg }` | the holder | only to the IBC bridge |
+| `transfer_nft { recipient, token_id }` | the IBC bridge only | returns a bridged badge to a wallet without a badge |
+| `approve`, `revoke`, `approve_all`, `revoke_all` | — | always `Soulbound` |
+| `transfer_ownership`, `accept_ownership`, `cancel_ownership_transfer` | owner / pending owner | two-step ownership |
+
+### Queries
+
+| Query | Response |
+|---|---|
+| CW721 `contract_info`, `num_tokens`, `owner_of`, `nft_info`, `all_nft_info`, `tokens { owner }`, `all_tokens`, `minter`, `approvals`, `all_operators` | standard shapes; `nft_info.extension` carries name, image, description and the attributes `tier`, `tier_name`, `score`, `boost_bps`, `account`, `issued_at`; approvals are always empty |
+| `config {}` | `owner`, `attester`, `base_uri`, `paused`, `ibc_bridge`, `token_count`, `minted` |
+| `badge { owner }` | the badge a wallet holds, or `null` |
+| `account { account }` | `{ last_nonce, revoked_at, badge }` |
+| `tiers {}` | the tier list |
+| `ownership {}` | `{ owner, pending_owner, pending_expiry }` |
+
+Dyma serves each badge's metadata JSON (name, image, attributes) at
+`GET /v1/discover/reputation/badges/:tokenId` and the tier images at
+`GET /v1/reputation/badges/<tier key>.svg`.

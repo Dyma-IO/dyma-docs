@@ -27,7 +27,7 @@ events.
 
 | `action` | Attributes |
 |---|---|
-| `instantiate` | `funding_attempt`, `owner`, `factory`, `asset_kind`, `asset`, `funded`, `starts_at`, `ends_at`, `commit_deadline` |
+| `instantiate` | `funding_attempt`, `owner`, `factory`, `asset_kind`, `asset`, `funded`, `starts_at`, `ends_at`, `commit_deadline`, `payout_mode` (0.2.0) |
 | `top_up` | `sender`, `amount`, `funded_total` |
 | `cancel` | `by`, `refunded`, `to` |
 | `commit` | `count`, `points`, `entry_count`, `total_points`, `first`, `last` |
@@ -37,14 +37,33 @@ events.
 | `reject` | `by`, `reason`, `new_version`, `commit_deadline` (`version` = the rejected one) |
 | `resolve` | `by`, `decision` (`keep_allocation` + `claim_deadline`; `reject_allocation` + `new_version`, `commit_deadline`) |
 | `distribute` | `processed`, `attempted_count`, `attempted_amount`, `skipped`, `cursor` — attempts, computed before the payout replies of the same transaction (`payout_failed` events correct them) |
-| `completed` | settled totals: `paid_count`, `paid_total`, `failed_count`, `failed_outstanding`, `skipped_count`, `skipped_total`, `fee_paid`, `treasury`, `leftover_refunded` |
+| `completed` | settled totals: `paid_count`, `paid_total`, `failed_count`, `failed_outstanding`, `skipped_count`, `skipped_total`, `fee_paid`, `treasury`, `leftover_refunded`; after a `close`, also `unclaimed_count`, `unclaimed_total` |
+| `close` | claim escrows: `by`, `unclaimed_count`, `unclaimed_total` (distributable − paid); followed by `completed` in the same transaction |
 | `claim` | `recipient`, `amount` (+ `previously_failed`) |
 | `retry` | `recipient`, `result` (`submitted` + `amount`, or `not_failed`) |
 | `payout_failed` / `fee_failed` / `refund_failed` | `recipient`, `amount`, `error` / `treasury`, `amount`, `error` / `amount`, `error` (`error` is redacted by wasmd to a code) |
 | `reclaim_expired` / `sweep` | `amount`, `to`, `at` |
 | `refund_stray` | `assets`, `to` |
 | `pause` / `unpause` | `until`, `kind`, `by` |
+| `ownership_*` | as for the factory |
+| `migrate` | `from_version`, `to_version`, `payout_mode` (0.2.0) |
+
+## `wasm-dyma_reputation`
+
+| `action` | Attributes |
+|---|---|
+| `instantiate` | `name`, `symbol`, `admin`, `tiers` (count) |
+| `claim_badge` | `account`, `owner`, `token_id`, `tier`, `tier_name`, `score`, `nonce`, `burned` (the replaced token id, or empty) |
+| `burn` | `token_id`, `account`, `by` |
+| `revoke_badge` | `account`, `token_id`, `owner`, `reason`, `by` |
+| `update_config` | `changed` |
+| `set_ibc_bridge` | `bridge` |
+| `send_nft` / `transfer_nft` | `token_id`, `sender`, `recipient` |
 | `ownership_*`, `migrate` | as for the factory |
+
+In a claim escrow, each claim shows as one `claim` event (`recipient`, `amount`) plus the bank (or
+CW20) transfer to the recipient. Dyma's indexer reconciles both the claims sent from its app and
+claims sent from anywhere else.
 
 ## Indexing
 
