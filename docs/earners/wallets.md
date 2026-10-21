@@ -50,6 +50,11 @@ campaigns). Dyma picks your payout address on that chain like this:
    derive a payout address.
 3. Otherwise you have **no payout address** and cannot be paid: link a wallet on the payout chain.
 
+**Escrow campaigns with claim-only payouts** go one step further: the campaign has a Wallet Connect
+quest on the escrow's network, and only earners who completed it are committed. The committed
+address is the only one that can sign your claim, so keep access to it until you have claimed
+([Claim a token reward](./claim-a-reward)).
+
 The campaign page and your Rewards page show which address will be used. When yours is missing, the
 campaign page tells you which chain to link and the deadline, and Dyma notifies you **48 hours** and
 **6 hours** before payout addresses are fixed (the end of the campaign plus its review grace).
@@ -64,6 +69,7 @@ You are left out of a split (and told why on the campaign page) when:
 | Below the minimum payout | your share would be under the campaign's minimum (for example 0.01 USDC) |
 | Payout wallet shared with another account | two accounts resolved to the same address |
 | Wallet cannot receive escrow payouts | the address is one the escrow refuses (a contract or a role address of the escrow) |
+| Wallet quest of the payout network not completed | claim-only escrows pay only earners who completed the campaign's Wallet Connect quest on that network |
 | Project team member | members of the project do not take part in its pool |
 | Account suspended | |
 
@@ -73,6 +79,7 @@ top N earners. See [Token rewards](./token-rewards#the-campaigns-split-rules).
 ## Safety
 
 - Dyma never asks for your seed phrase, and signing in never moves funds.
-- Fees for token payouts in automatic mode are paid by Dyma's operator, not by you. Claiming your
-  own payout yourself (optional, see [Token rewards](./token-rewards)) costs a normal transaction fee.
+- Claiming a reward from a claim-only escrow, or claiming a badge, is a transaction you sign and
+  pay (a few hundredths of a SAF). In older escrows that pay automatically, Dyma's operator pays
+  the payout fees; claiming your own payout there is optional.
 - Check the address in the wallet prompt before approving any transaction.

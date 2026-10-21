@@ -1,5 +1,5 @@
 ---
-sidebar_position: 5
+sidebar_position: 6
 ---
 
 # Verify an escrow on the explorer
@@ -9,9 +9,9 @@ contract on Safrochain. You do not have to trust Dyma's pages: everything below 
 against the chain itself.
 
 :::note Status
-The escrow contracts are open source, have passed an internal pre-audit review and are **not yet
-externally audited**. Until the contracts are deployed on mainnet, automatic campaigns exist only
-on testnet. See [Deployments](../contracts/deployments).
+The escrow contracts have passed an internal pre-audit review and are **not yet externally
+audited**. They run on Safrochain mainnet; see [Deployments](../contracts/deployments) for the
+code ids and checksums.
 :::
 
 ## 1. Find the escrow's details
@@ -77,6 +77,7 @@ What to look for:
 | `status.phase` | `upcoming`, `active`, `ended`, `committing`, `challenge`, `disputed`, `distributing`, `completed`, `cancelled` or `expired` |
 | `status.balance` vs `funded_total` | the live balance; top-ups add to `funded_total` |
 | `status.paused` | `true` while a pause holds it; deadlines then move by the paused time |
+| `status.payout_mode` | `claim` (escrow code 0.2.0: you claim your share) or absent (older escrows: `push`, paid automatically) |
 
 ## 4. Check the allocation
 
@@ -98,7 +99,15 @@ pays each entry exactly its weight. Your raw campaign points are listed next to 
 
 ## 5. Follow the payouts
 
-Once the challenge window is over, payouts appear as bank transfers from the escrow address in the
-explorer (one per earner, in batches). Your own payout transaction is linked on your Rewards page.
-If yours failed, it stays reserved: you can send a `claim` transaction from your wallet until the
-claim deadline, or wait for Dyma to retry it.
+Once the challenge window is over:
+
+- **Claim escrows** (`payout_mode: "claim"`): nothing is sent automatically. Each earner's
+  `claim` transaction pays their share from the escrow to the committed wallet; your entry's
+  `status` moves from `pending` to `paid`. When the escrow is closed after the claim deadline,
+  entries nobody claimed read `unclaimed` and the `close` transaction sends them back to the owner
+  ([Claim a token reward](./claim-a-reward)).
+- **Push escrows** (no `payout_mode`): payouts appear as bank transfers from the escrow address in
+  the explorer (one per earner, in batches). If yours failed, it stays reserved: you can send a
+  `claim` transaction from your wallet until the claim deadline, or wait for Dyma to retry it.
+
+Your own payout or claim transaction is linked on your Rewards page.
