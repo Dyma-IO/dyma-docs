@@ -29,7 +29,8 @@ Every write is audit-logged.
 | Google | `google` | sign-in |
 | S3 storage | `hetzner_s3` | uploads (any S3-compatible bucket) |
 | AWS SES | `aws_ses` | e-mail (read from the environment in practice) |
-| AI provider | `ai_provider` | SEO assistant |
+| Anthropic (Claude API) | `anthropic` | Dyma AI review: `apiKey`, and `workspaceId` for keys not scoped to a workspace (Admin → Integrations → Claude) |
+| AI provider | `ai_provider` | reserved (unused) |
 | Stripe | `stripe` | kept but disabled; Stripe secrets are read from the environment |
 | Escrow keys | `escrow_operator`, `escrow_ticket`, `escrow_pauser` | the escrow's hot keys in mnemonic mode, super admin only, write-only (Admin → Settings → Credentials shows the derived address and balance) — see [Escrow operations](../operators/escrow-operations) |
 

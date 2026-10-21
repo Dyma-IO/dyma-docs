@@ -108,6 +108,13 @@ available on Injective yet.
 
 Free never expires. Its usage counter resets every month.
 
+## AI reviews
+
+Paid plans include a monthly number of **AI reviews**: Claude reviews the submissions of manual and
+hybrid quests and approves or rejects them (Starter 100, Growth 500, Pro 2,500, Enterprise 10,000
+a month by default; Free has none). Past the quota, submissions wait for your moderators until the
+next month. See [Moderation and AI review](./ai-review).
+
 ## Invoices
 
 **Billing → Invoices** lists every paid request with its number, amount, asset, payer address,

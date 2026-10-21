@@ -32,8 +32,8 @@ Priority platforms for launch and marketing:
 | Project REST API | `project_rest` | Custom project logic |
 | Manual review | `manual` | Links, content, moderators |
 | Hybrid | `hybrid` | Auto first, manual fallback |
-| AI verify | `ai_verify` | currently routed to human review |
-| Hybrid + AI | `hybrid_ai` | currently routed to human review |
+| AI verify | `ai_verify` | review queue; Dyma AI review (Claude) decides first on paid plans |
+| Hybrid + AI | `hybrid_ai` | review queue; Dyma AI review (Claude) decides first on paid plans |
 
 ## Full catalog
 
