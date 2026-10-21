@@ -38,6 +38,7 @@ Each project sets these rules per campaign. The campaign page lists the ones tha
 | Top N | only the N earners with the most points are paid | "Top 50 earners by points" |
 | Maximum payout | the most any one earner can receive, whatever their points | "Max 100,000 SAF per earner" |
 | Minimum payout | a share below it is not paid (by default one hundredth of a token, e.g. 0.01 USDC) | "Min 1,000 SAF to be paid" |
+| Reputation boost | each earner's weight is multiplied by their [reputation tier's boost](./reputation-and-boosts) (x1.00 to x2.00 by default) | "Reputation boost on" |
 
 In automatic mode the rules are locked with the pool in the escrow: once the project has funded it,
 they cannot change. In manual mode the project pays the split Dyma computes with the same rules.
@@ -63,8 +64,9 @@ Whatever earners do not receive (apart from Dyma's fee, 0 by default) returns to
 
 - **At completion** (automatic mode), in the same transaction that completes the escrow: rounding
   dust, amounts not paid because of the minimum or the maximum, and the unused fee reserve.
-- **After the claim window**: payouts still unclaimed when the claim deadline passes (for example a
-  transfer that failed and was never claimed).
+- **After the claim window**: shares still unclaimed when the claim deadline passes. In a claim
+  escrow that is every share its earner did not claim; in an older (push) escrow, a transfer that
+  failed and was never claimed.
 - **If the split expires** (Dyma does not finalize it before the commit deadline): the whole pool.
 
 In manual mode the pool never leaves the project's wallet, so whatever is not paid simply stays
@@ -75,7 +77,7 @@ there.
 | | Manual distribution | Automatic distribution (escrow) |
 |---|---|---|
 | Where the pool is | in the project's wallet | locked in an escrow contract on Safrochain since before the campaign went live |
-| Who pays | the project, with Dyma's payout assistant | the contract, after a public challenge window |
+| Who pays | the project, with Dyma's payout assistant | the contract, after a public challenge window: you **claim** your share from your wallet ([Claim a token reward](./claim-a-reward)); escrows funded before claim-only payouts pay automatically |
 | What you see | "Paid by *project*" and the payout transaction | escrow address, funding transaction, live balance, then your payout transaction |
 | Guarantee | the project's word: Dyma computes the exact amounts and checks every payout transaction on chain, but cannot force payment | the pool cannot leave the escrow except to earners (or back to the owner, see [What goes back to the project](#what-goes-back-to-the-project)) |
 
@@ -88,11 +90,16 @@ there.
 4. **Challenge window** (default 24 h, between 1 hour and 7 days). Anyone can check the allocation;
    the project can dispute it once, and Dyma's guardian multisig can reject a wrong one (it is then
    recomputed and committed again).
-5. **Payouts.** The contract pays everyone in batches. Gas is paid by Dyma's operator. If a payout
-   to your address fails, it stays reserved for you.
-6. **Claim (optional).** Until the claim deadline (by default 180 days after payouts open) you can
-   also call `claim` yourself from your wallet — useful if your payout failed or you do not want
-   to wait for the next batch.
+5. **Claims** (escrows created since October 2026). Nothing is sent automatically: each earner
+   claims their share from the committed wallet before the **claim deadline** (30 to 365 days
+   after claims open, chosen by the project, 30 by default) and pays the claim's network fee. To
+   be committed at all you must have completed the campaign's Wallet Connect quest. Afterwards the
+   project closes the escrow and every unclaimed share returns to it. See
+   [Claim a token reward](./claim-a-reward).
+6. **Payouts** (older, push escrows). The contract pays everyone in batches and Dyma's operator
+   pays the gas. If a payout to your address fails, it stays reserved for you: until the claim
+   deadline (180 days after payouts open for those escrows) you can call `claim` yourself from
+   your wallet.
 
 If the escrow is **paused** (by Dyma's pauser or guardian, e.g. during an incident), every deadline
 stops with it and resumes for exactly the time that was left; a pause never lets a window lapse.
@@ -109,6 +116,7 @@ transaction.
 - **Campaign page → reward pool**: pool, mode, phase, the split rules, your projected or final
   amount, and (automatic mode) the escrow's contract, funding transaction and a "Check it yourself"
   button that reads the contract from a public node in your browser.
-- **Rewards**: every payout with its status, amount and transaction link.
+- **Rewards**: shares ready to claim, then every payout with its status, amount and transaction
+  link.
 
 To check an escrow independently of Dyma, follow [Verify an escrow on the explorer](./verify-an-escrow).

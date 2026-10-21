@@ -30,8 +30,8 @@ draft ──submit──► pending review ──approved──► scheduled ─
 - the project is live,
 - at least one quest is **live** (the wizard creates quests as drafts: publish them),
 - the reward token is not declined, and the end date (if any) is in the future,
-- in **automatic** mode: both dates are set and the escrow is **funded** (see
-  [Funding the escrow](./funding-step-by-step)).
+- in **automatic** mode: both dates are set, the campaign has a Wallet Connect quest on the
+  escrow's network, and the escrow is **funded** (see [Funding the escrow](./funding-step-by-step)).
 
 Approval also requires an approved reward token. Plans with **campaign approval bypass** (Pro and
 above by default), or a platform where Dyma turned on automatic campaign approval, skip the queue:
@@ -75,6 +75,9 @@ open-ended; its points stop counting when you end it.
 Deleting a quest that already credited earners archives it instead, so nobody loses points. Quests
 are shown in the order you set (drag to reorder in the wizard).
 
+In a campaign paid by an escrow, the last Wallet Connect quest on the escrow's network cannot be
+deleted, archived or moved to another chain: it is how earners register the wallet they claim with.
+
 ## Eligibility
 
 The **Eligibility** step sets who may take part, checked on every completion:
@@ -92,4 +95,6 @@ Earners see the rules (never the allowlist itself) and whether they qualify.
 
 Points stop at the end; reviews still pending can be decided during the **review grace** (24 hours
 by default). Then the reward split is computed and paid: by you
-([Manual payouts](./manual-payouts)) or by the escrow ([Automatic distribution](./automatic-escrow)).
+([Manual payouts](./manual-payouts)) or through the escrow, where earners claim their shares during
+the claim window and you withdraw what was not claimed afterwards
+([Automatic distribution](./automatic-escrow)).

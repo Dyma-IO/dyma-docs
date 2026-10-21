@@ -66,8 +66,8 @@ links.
 
 | Contract | Status |
 |---|---|
-| Escrow factory + campaign escrow | implemented (v0.1.0), internal review done, external audit pending, not deployed yet — see [Smart contracts](../contracts/overview) |
-| Reputation NFT | placeholder, not implemented |
+| Escrow factory + campaign escrow | live on `safrochain-1`: factory 0.1.0, escrow 0.2.0 (claim-only) for new campaigns, 0.1.0 (push) for older ones; internal review done, external audit pending — see [Smart contracts](../contracts/overview) |
+| Reputation badges (`dyma-reputation`) | 0.1.0, soulbound CW721-compatible badges — see [Points, XP and reputation](./reputation#the-on-chain-badge) |
 
 There is no standalone indexer service: the API verifies on-chain quests itself and indexes the
 escrow contracts it operates.

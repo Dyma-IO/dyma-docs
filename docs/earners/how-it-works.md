@@ -22,6 +22,13 @@ Open the earner app and choose any of:
 You can link more wallets and accounts later from your profile. Some quests need a linked account
 (X, Discord, Telegram, YouTube, GitHub) or a wallet on a given chain.
 
+## Your profile picture
+
+In **Profile**, pick one of Dyma's 16 preset characters or upload a photo (PNG, JPG or WebP, up to
+2 MB): the app lets you drag and zoom it into a square and uploads a 512 × 512 image. You can
+remove it at any time; your initials are shown instead. Your picture appears in leaderboards and
+participant lists. It stays off chain.
+
 ## Campaign phases
 
 | Phase | What you can do |
@@ -30,7 +37,7 @@ You can link more wallets and accounts later from your profile. Some quests need
 | Live | complete quests |
 | Paused | nothing: completions are refused until the project or Dyma resumes it |
 | Ended | no more completions; quests waiting for review can still be decided |
-| Distributing | the token pool is being split and paid |
+| Distributing | the token pool is being split; on newer escrows you [claim your share](./claim-a-reward) from your wallet |
 | Distributed | every payout is done; your payout transaction is linked on the campaign page |
 
 A campaign may also set **eligibility rules**, shown on its page: a verified e-mail, a minimum
