@@ -16,7 +16,12 @@ verified submission is credited immediately: there is no separate claim step.
 | Project REST API | `project_rest` | the project's own endpoint, called and signed by Dyma (see [Project REST verification](../projects/rest-verification)) |
 | Manual review | `manual` | the project's (or Dyma's) moderators approve or reject |
 | Hybrid | `hybrid` | automatic first; after a provider error or 3 failed checks the earner can request a review |
-| AI verify, Hybrid + AI | `ai_verify`, `hybrid_ai` | currently routed to human review |
+| AI verify, Hybrid + AI | `ai_verify`, `hybrid_ai` | routed to review, where Dyma AI review (Claude) decides first on paid plans |
+
+Submissions that go to review (`manual`, `hybrid` after its fallback, `ai_verify`, `hybrid_ai`) are
+first reviewed by **Dyma AI review** when the project's paid plan includes AI reviews: Claude
+approves or rejects above its confidence thresholds, otherwise the item stays with the moderators
+(see [Moderation and AI review](../projects/ai-review)).
 
 Built-in flows verify themselves on the server: quizzes (answers never leave the server), secret
 codes, visits (waiting time enforced), daily check-ins, lucky draws, referrals, e-mail links and

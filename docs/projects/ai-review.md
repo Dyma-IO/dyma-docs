@@ -1,0 +1,60 @@
+---
+sidebar_position: 11
+---
+
+# Moderation and AI review
+
+Some quests cannot be checked by an API: a screenshot, a written answer, a link to a post. Their
+submissions wait in **Studio → Moderation** until someone approves or rejects them. On paid plans,
+**Dyma AI review** does that first pass for you: Claude reads the quest and the evidence, then
+approves or rejects, or leaves the item to your moderators when it cannot tell.
+
+## What is reviewed
+
+| Verification method | Reviewed by AI |
+|---|---|
+| Manual review (`manual`) | yes |
+| Hybrid (`hybrid`): automatic first, then review | yes, once it falls back to review |
+| AI verify (`ai_verify`), Hybrid + AI (`hybrid_ai`) | yes |
+| Platform API, on-chain, your REST API, built-in flows | no: they verify themselves |
+
+Claude sees the quest (title, type, instructions, the fields it asks for), what the earner typed,
+and up to two evidence images, downscaled. **Links are not opened**: Claude judges what a URL shows
+by itself (domain, handle, post id). Other files (PDF, video) are listed by name only. Everything
+the earner sent is treated as untrusted data: instructions hidden in a submission are ignored.
+
+## Decisions
+
+| Verdict | What happens |
+|---|---|
+| Approve, confident enough | the submission is approved and the earner is credited, as if a moderator approved it |
+| Reject, confident enough | the submission is rejected; the earner sees Claude's short explanation |
+| Needs a human, or not confident enough | the item stays in your queue with Claude's verdict and reason attached |
+
+Dyma applies a verdict only above its confidence thresholds (by default 80% to approve, 85% to
+reject). Your moderators can still decide any item still waiting: whoever decides first wins, and
+an item a moderator already decided is never changed by the AI.
+
+In the queue, each item shows Claude's verdict (**AI: Approve · 92%**, **AI: Needs a human**, …).
+The review sheet adds its reason and, for a rejection, the message the earner received.
+
+## AI reviews per plan
+
+Each paid plan includes a number of AI reviews per calendar month (UTC):
+
+| Plan | AI reviews / month |
+|---|---|
+| Free | none |
+| Starter | 100 |
+| Growth | 500 |
+| Pro | 2,500 |
+| Enterprise | 10,000 |
+
+These are the defaults; Dyma can change them. AI reviews apply while the subscription is paid
+(active, or in its renewal grace); trials do not include them. **When the month's reviews are used
+up, the remaining submissions wait for your moderators**, as on a plan without AI reviews, until
+the next month.
+
+**Billing → Overview** shows the reviews used this month against your quota and, when Claude is
+not reviewing your submissions, why (no AI reviews on the plan, quota used, subscription not paid,
+paused on Dyma).

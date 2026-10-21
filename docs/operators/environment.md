@@ -97,6 +97,17 @@ key wins, and real environment variables (PM2, shell, CI) beat both.
 These are defaults: once an admin saves **Billing → Settings**, the stored settings win (see
 [Billing settings](./billing-settings)).
 
+### AI review
+
+| Variable | Default | Notes |
+|---|---|---|
+| `CLAUDE_API_KEY` (or `ANTHROPIC_API_KEY`) | — | seed only: at boot, when no `anthropic` credential is stored, the API stores this key encrypted; Admin → Integrations → Claude owns it from then on. Never logged |
+| `CLAUDE_WORKSPACE_ID` (or `ANTHROPIC_WORKSPACE_ID`) | — | `wrkspc_…`, needed with keys that are not scoped to a workspace (personal `sk-ant-usr…` keys) |
+| `AI_REVIEW_MODE` | `off` | `off`, `shadow` or `live` until an admin saves Settings → AI review |
+| `AI_REVIEW_SHADOW_LIMIT` | `5` | shadow reviews per UTC day until an admin saves the settings |
+
+See [AI review operations](./ai-review).
+
 ### Integrations
 
 `GOOGLE_*`, `TWITTER_*` (incl. `TWITTER_BEARER_TOKEN`), `GITHUB_*`, `YOUTUBE_*`, `DISCORD_CLIENT_ID`,
