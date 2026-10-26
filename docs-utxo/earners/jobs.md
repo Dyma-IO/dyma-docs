@@ -94,7 +94,8 @@ A project may cap the number of rounds; past it, it approves or rejects.
 
 Claim escrow pay soon after approval. The escrow has an expiry, by default 60 days after the last
 deadline it funds; after it, the project can take back everything left in the escrow without Dyma,
-unclaimed pay included.
+unclaimed pay included. The pay card says **Ready to claim, before** that date, and Dyma UTXO reminds
+you 14 days and 3 days before it.
 
 When a direct payment does not come, **Report not paid** opens a dispute once the payment deadline
 has passed (7 days after approval by default).
