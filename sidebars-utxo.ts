@@ -33,6 +33,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'projects/getting-started',
         'projects/campaign-lifecycle',
+        'projects/reward-tokens',
         'projects/distribution',
         'projects/automatic-escrow',
         'projects/funding-step-by-step',
