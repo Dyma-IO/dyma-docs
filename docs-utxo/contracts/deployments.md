@@ -5,17 +5,20 @@ description: Where Dyma UTXO's escrow and reputation badges are deployed, with t
 # Deployments
 
 :::info Preprod only, mainnet next
-The escrow and the reputation badges are **deployed on Cardano's preprod test network** (October
-2026). They are **not deployed on mainnet yet**: until they are, campaigns on mainnet use manual
-distribution only, and badge claims stay closed there.
+The escrow, the reputation badges and the job escrow are **deployed on Cardano's preprod test
+network** (October 2026). They are **not deployed on mainnet yet**: until they are, campaigns on
+mainnet use manual distribution only, badge claims stay closed there, and jobs on mainnet are paid
+directly by projects.
 :::
 
 | Contract | Network | Status | Record |
 |---|---|---|---|
 | Escrow 0.1.0 | Preprod | deployed, verified against the chain | [`deployments/preprod.json`](https://github.com/Dyma-IO/dyma-contracts-cardano/blob/main/deployments/preprod.json) |
 | Reputation badges 0.1.0 | Preprod | deployed | [`deployments/preprod.reputation.json`](https://github.com/Dyma-IO/dyma-contracts-cardano/blob/main/deployments/preprod.reputation.json) |
+| Job escrow 0.1.0 | Preprod | deployed | [`deployments/preprod.jobs.json`](https://github.com/Dyma-IO/dyma-contracts-cardano/blob/main/deployments/preprod.jobs.json) |
 | Escrow | Mainnet | not deployed yet | `deployments/mainnet.json` once deployed |
 | Reputation badges | Mainnet | not deployed yet | `deployments/mainnet.reputation.json` once deployed |
+| Job escrow | Mainnet | not deployed yet | `deployments/mainnet.jobs.json` once deployed |
 
 Each record is written by the repository's deployment script after every confirmed step, committed,
 and read back from the chain before Dyma UTXO uses it. The values below are those of the records in
@@ -100,6 +103,27 @@ configuration, from the runbook, are shown next to them:
 | 5 | Champion | 15,000 | x1.50 |
 | 6 | Legend | 30,000 | x1.75 |
 | 7 | Mythic | 60,000 | x2.00 |
+
+## Preprod job escrow
+
+The escrow of [Dyma Jobs](https://github.com/Dyma-IO/dyma-contracts-cardano/blob/main/docs/SPEC.md#11-job-escrow-dyma-jobs):
+one script, parameterised by a seed, is the job tokens' policy and the address of the configuration
+and of every job.
+
+| Item | Value |
+|---|---|
+| Built from | commit `ca03428914b20353ea3fafb91c291c82d8f56c52`, Aiken `v1.1.24+bacbeb3` |
+| Seed | `97f4f869d7a2a6a28c10250f3f73e792f6f38ace1a386d37e66c2e000e630df4#2` |
+| Policy id (also the script hash) | [`4c97ca97dd722041c881a8ebd899789de58dba0b63fe7e4acb652860`](https://preprod.cardanoscan.io/tokenPolicy/4c97ca97dd722041c881a8ebd899789de58dba0b63fe7e4acb652860) |
+| Address (configuration and jobs) | `addr_test1wpxf0j5hm4ezqswgsx5whkye0zw7trd6pd3lulj2edjjscqvxdgcc` |
+| Script size | 8,638 bytes |
+| Configuration UTxO at deployment | [`6ff96d5f…#0`](https://preprod.cardanoscan.io/transaction/6ff96d5f421ebd40b86472bc100dc349370db671aeefcfcd5d97b3889166e31c) |
+| Reference script UTxO | [`08fba9c9…#0`](https://preprod.cardanoscan.io/transaction/08fba9c9aaa493d55911297ce9c6a1c0c577ccaa00db7c5776a54222f3793a86) |
+| Governance | 2-of-3, the same keys as the escrow's governance |
+| Attester (Ed25519 public key) | `ddccc6b80fe532016d076e94246ef170ef74cc3955093dbe5a14a49713c59e23`, a key of its own |
+| Treasury (receives the fee) | the escrow's treasury, `addr_test1qzf0yt2d…sapvz6g` |
+| Highest fee a job may set | 10% (1,000 basis points) |
+| Paused | no |
 
 ## How a deployment is verified
 
