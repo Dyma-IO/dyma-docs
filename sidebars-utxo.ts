@@ -35,6 +35,7 @@ const sidebars: SidebarsConfig = {
         'projects/getting-started',
         'projects/campaign-lifecycle',
         'projects/reward-tokens',
+        'projects/jobs',
         'projects/distribution',
         'projects/automatic-escrow',
         'projects/funding-step-by-step',

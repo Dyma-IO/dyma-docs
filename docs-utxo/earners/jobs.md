@@ -5,7 +5,7 @@ description: Paid work that projects post outside their campaigns, one-off tasks
 # Jobs
 
 Besides campaigns, projects on Dyma UTXO post **jobs**: paid work for one person, with a fixed reward.
-Find them under **Jobs** in the app's menu.
+Find them under **Jobs** in the app's menu. (For projects: [Jobs in Studio](../projects/jobs).)
 
 | | Task | Opportunity |
 |---|---|---|

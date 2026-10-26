@@ -53,4 +53,4 @@ mint more. Registry tokens cannot be edited in Studio: their details follow the 
 
 - **Campaigns**: the reward step offers the tokens of your list; a campaign can only go live with a
   verified token. See [Distribution modes and the split](./distribution).
-- **Jobs**: a job pays only in ADA, USDM or USDCx.
+- **Jobs**: a job pays only in ADA, USDM or USDCx. See [Jobs](./jobs).
