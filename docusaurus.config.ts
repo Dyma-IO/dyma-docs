@@ -177,7 +177,7 @@ const CARDANO_CONTRACTS_REPO_URL = 'https://github.com/Dyma-IO/dyma-contracts-ca
  * Dyma UTXO's site: Dyma's theme and build rules with its own pages, sidebar, homepage, static
  * files, names and links. No link points at Dyma's site, and there is no "Edit this page" link.
  */
-function dymaUtxo(base: Config): Config {
+function utxoEditionConfig(base: Config): Config {
   const docsUrl = process.env.DOCS_URL?.trim();
   if (!docsUrl) {
     throw new Error(
@@ -299,6 +299,6 @@ function dymaUtxo(base: Config): Config {
   };
 }
 
-const config: Config = docsEdition(process.env.DOCS_EDITION) === 'utxo' ? dymaUtxo(dyma) : dyma;
+const config: Config = docsEdition(process.env.DOCS_EDITION) === 'utxo' ? utxoEditionConfig(dyma) : dyma;
 
 export default config;
