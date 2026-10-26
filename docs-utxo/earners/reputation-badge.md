@@ -48,9 +48,16 @@ for them.
 ## Upgrading
 
 When you reach a higher tier, choose **Upgrade to** that tier. The same transaction mints the new
-pair and retires your previous badge by burning its reference token; the ADA that reference held
-comes back to your wallet. The old user token stays in your wallet without a reference: it no longer
-counts, and you can burn it.
+pair and retires your previous badge: it burns the old reference token, and the old user token too
+when it is still in the wallet you sign with. The ADA the old reference held comes back to your
+wallet.
+
+## Refreshing
+
+A badge keeps the name and image it was minted with. When Dyma UTXO changes a tier's artwork, the
+Reputation page offers **Refresh badge**: the same claim mints your tier again with the new artwork
+and retires the old badge. Your wallet pays the network fee; the ADA of the old record comes back.
+Wallets can take a minute to show the new image.
 
 - One account, one badge: only the newest reference counts.
 - The badge's governance (Dyma's keys) can retire a badge, for example after abuse. Attestations
