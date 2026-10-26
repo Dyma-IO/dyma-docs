@@ -125,10 +125,23 @@ Alerts arrive in the admin inbox, at most once a day per key and once an hour pe
 
 ## Multisig transactions
 
-Dyma UTXO's API never signs for governance or the guardian. Their transactions (registry updates,
-global pauses, rescues, rejections, dispute decisions, cancellations) are signed by each signer with
-their own wallet, for example with Eternl's multisig flow or `cardano-cli transaction witness`, and
-anyone can submit the assembled transaction. The runbook describes the flow.
+Dyma UTXO's API never holds a governance or guardian key.
+
+**Guardian transactions** (reject an allocation, resolve a dispute, cancel before finalize, pause,
+lift a pause) start in Admin, on the escrow's page:
+
+1. Choose the action and the guardian signers (at least the registry's threshold). Admin prepares
+   the transaction and shows its hash and CBOR.
+2. Each signer adds a witness: with a CIP-30 wallet in Admin (a hardware wallet through Eternl or
+   Lace works the same way), or by pasting a witness made elsewhere, for example with
+   `cardano-cli transaction witness`.
+3. When the last chosen signer is in, Dyma's operator pays the fee, signs and submits.
+
+Signers have six hours (one hour for a pause or an unpause), after which the transaction is prepared
+again.
+
+**Governance transactions** (registry updates, global pauses, rescues) follow the same witness
+flow but are not built by Admin yet: the contracts runbook describes them.
 
 ## Incidents
 
