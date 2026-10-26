@@ -9,12 +9,16 @@
 #   └─ previous -> releases/<id>/app the release before it (rollback target)
 #
 # Pipeline: fetch → export the commit into releases/<id>/app → npm ci →
-# docusaurus build (DOCS_URL / DOCS_BASE_URL) → check build/index.html → switch
-# `current` → optional HEALTH_URL check → on failure: switch back.
+# docusaurus build (DOCS_EDITION / DOCS_URL / DOCS_BASE_URL) → check build/index.html
+# → switch `current` → optional HEALTH_URL check → on failure: switch back.
 # No PM2, no dyma-shared, no runtime: nginx reads files from `current`.
 #
 # The committed config targets GitHub Pages (baseUrl /dyma-docs/); a subdomain
 # root needs DOCS_BASE_URL=/ (the default here) and DOCS_URL.
+#
+# DOCS_EDITION picks the site: unset (or `cosmos`) builds Dyma's docs, `utxo`
+# builds Dyma UTXO's (docs-utxo/), whose links and contact address come from
+# DOCS_URL, which it must then set explicitly.
 #
 # Usage:
 #   deploy/deploy.sh                 deploy origin/$DEPLOY_BRANCH
@@ -31,6 +35,8 @@ REPO_DIR="${REPO_DIR:-$DEFAULT_REPO_DIR}"                 # the git clone (APP_R
 APP_ROOT="${APP_ROOT:-$(dirname "$REPO_DIR")}"
 DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
 DEPLOY_REF="${DEPLOY_REF:-}"
+DOCS_EDITION="${DOCS_EDITION:-}"                          # unset/cosmos: Dyma; utxo: Dyma UTXO
+DOCS_URL_GIVEN="${DOCS_URL:-}"
 DOCS_URL="${DOCS_URL:-https://testnet.docs.dyma.io}"
 DOCS_BASE_URL="${DOCS_BASE_URL:-/}"
 HEALTH_URL="${HEALTH_URL:-}"                              # e.g. https://testnet.docs.dyma.io/docs/intro
@@ -69,6 +75,16 @@ site_ok() { # the public URL answers 200 (skipped when HEALTH_URL is empty)
   [ -z "$HEALTH_URL" ] && return 0
   [ "$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$HEALTH_URL" || true)" = "200" ]
 }
+
+case "$DOCS_EDITION" in
+  ""|cosmos) EDITION_TITLE="Dyma Docs" ;;
+  utxo)
+    EDITION_TITLE="Dyma UTXO Docs"
+    # Never build Dyma UTXO's site with Dyma's testnet URL: its links and contact come from DOCS_URL.
+    [ -n "$DOCS_URL_GIVEN" ] || [ "$MODE" != deploy ] || die "DOCS_EDITION=utxo needs DOCS_URL (https://docs.<domain>)"
+    ;;
+  *) die "unknown DOCS_EDITION=$DOCS_EDITION (leave it unset for Dyma, or set utxo)" ;;
+esac
 
 mkdir -p "$RELEASES_DIR"
 
@@ -115,7 +131,7 @@ if [ -z "${DYMA_DEPLOY_REEXEC:-}" ]; then
   if git -C "$REPO_DIR" show "$SHA:deploy/deploy.sh" > "$NEW_SCRIPT" 2>/dev/null && ! cmp -s "$NEW_SCRIPT" "$SCRIPT_PATH"; then
     log "Running the deploy script of ${SHA:0:12}"
     rm -rf "$LOCK_DIR"; trap - EXIT
-    export DYMA_DEPLOY_REEXEC=1 REPO_DIR APP_ROOT DEPLOY_REF="$SHA"
+    export DYMA_DEPLOY_REEXEC=1 REPO_DIR APP_ROOT DEPLOY_REF="$SHA" DOCS_EDITION
     exec bash "$NEW_SCRIPT"
   fi
   rm -f "$NEW_SCRIPT"
@@ -124,20 +140,23 @@ fi
 RELEASE_ID="$(date -u +%Y%m%d%H%M%S)-${SHA:0:7}"
 REL="$RELEASES_DIR/$RELEASE_ID"
 [ ! -e "$REL" ] || die "$REL already exists (two deploys in the same second?); run it again"
-log "Release $RELEASE_ID (dyma-docs ${SHA:0:12}) — url=$DOCS_URL baseUrl=$DOCS_BASE_URL"
+log "Release $RELEASE_ID (dyma-docs ${SHA:0:12}) — ${EDITION_TITLE}, url=$DOCS_URL baseUrl=$DOCS_BASE_URL"
 
 mkdir -p "$REL/app"
 git -C "$REPO_DIR" archive --format=tar "$SHA" | tar -x -C "$REL/app"
-printf 'commit=%s\nref=%s\ndocs_url=%s\nbase_url=%s\nbuilt_at=%s\n' \
-  "$SHA" "$TARGET" "$DOCS_URL" "$DOCS_BASE_URL" "$(date -u +%FT%TZ)" > "$REL/DEPLOY_INFO"
+printf 'commit=%s\nref=%s\nedition=%s\ndocs_url=%s\nbase_url=%s\nbuilt_at=%s\n' \
+  "$SHA" "$TARGET" "${DOCS_EDITION:-cosmos}" "$DOCS_URL" "$DOCS_BASE_URL" "$(date -u +%FT%TZ)" > "$REL/DEPLOY_INFO"
 
 log "Installing dependencies (npm ci)"
 ( cd "$REL/app" && npm ci --no-audit --no-fund ) || { rm -rf "$REL"; die "npm ci failed"; }
 log "Building (docusaurus build; broken links fail the build)"
-( cd "$REL/app" && DOCS_URL="$DOCS_URL" DOCS_BASE_URL="$DOCS_BASE_URL" \
+( cd "$REL/app" && DOCS_EDITION="$DOCS_EDITION" DOCS_URL="$DOCS_URL" DOCS_BASE_URL="$DOCS_BASE_URL" \
     NODE_OPTIONS="--max-old-space-size=$NODE_MAX_OLD_SPACE" npm run build ) \
   || { rm -rf "$REL"; die "docusaurus build failed; the live site was not touched"; }
 [ -s "$REL/app/build/index.html" ] || { rm -rf "$REL"; die "build produced no build/index.html"; }
+# The edition reached the build: the homepage carries the site's own title.
+grep -q "<title[^>]*>${EDITION_TITLE}</title>" "$REL/app/build/index.html" \
+  || { rm -rf "$REL"; die "build/index.html is not titled \"$EDITION_TITLE\" (DOCS_EDITION not applied?)"; }
 # Assets must be served from the configured base, never from the GitHub Pages one.
 if [ "$DOCS_BASE_URL" = "/" ] && grep -q '/dyma-docs/assets/' "$REL/app/build/index.html"; then
   rm -rf "$REL"; die "the build still references /dyma-docs/ assets (DOCS_BASE_URL not applied)"
