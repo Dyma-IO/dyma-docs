@@ -11,9 +11,9 @@ Projects run **campaigns** made of **quests**; earners complete the quests, Dyma
 and the earners collect **points (DP)** and, when the campaign has a reward pool, a share of ADA or
 of a Cardano native token.
 
-Dyma UTXO runs the same platform as Dyma, the team behind it, on its own site, with its own accounts
-and deployments. The pages that describe what every Dyma site shares (quests, campaigns,
-moderation, points and reputation) name the platform Dyma.
+Dyma UTXO is built and run by Dyma: the same platform, on its own site, with its own accounts and
+deployments. The pages that describe what both share (quests, campaigns, moderation, points and
+reputation) call the platform Dyma.
 
 ## The surfaces
 

@@ -7,8 +7,8 @@ import {SiteCode} from '@site/src/components/Edition';
 # Wallets and sign-in
 
 A wallet does two separate jobs on Dyma UTXO: it **signs you in** (your stake key is your account),
-and it **receives your token rewards** at a payment address it proved. Both are signed messages,
-never transactions, so neither costs a fee.
+and it **receives your token rewards** at a payment address it proved. Signing in and proving the
+address are messages the wallet signs, never transactions, so neither costs a fee.
 
 ## Supported wallets
 
@@ -107,9 +107,9 @@ You are left out of a split (and told why on the campaign page) when:
 
 | Reason | What it means |
 |---|---|
-| No payout address on this network | you have not proved a payment address on the network the reward is paid on |
+| No payout wallet on this chain | you have not proved a payment address on the network the reward is paid on |
 | Below the minimum payout | your share would be under the campaign's minimum (for example 0.01 ADA) |
-| Payout key shared with another account | two accounts proved the same payment key: a split pays one earner per key |
+| Payout wallet shared with another account | two accounts proved the same payment key: a split pays one earner per key |
 | Wallet cannot receive escrow payouts | the payment key is one the escrow refuses: a key of the escrow's roles, of its treasury or of the campaign's owner |
 | Wallet quest of the payout network not completed | escrow campaigns pay only earners who completed the campaign's Wallet Connect quest on that network |
 | Project team member | members of the project do not take part in its pool |
