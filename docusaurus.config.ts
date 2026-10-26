@@ -174,9 +174,9 @@ const DISCUSSIONS_URL = 'https://github.com/orgs/Dyma-IO/discussions';
 const CARDANO_CONTRACTS_REPO_URL = 'https://github.com/Dyma-IO/dyma-contracts-cardano';
 
 /**
- * Dyma UTXO's site: Dyma's theme in UTXO blue and Dyma's build rules, with its own pages, sidebar,
- * homepage, static files (logos and favicon in UTXO blue), names and links. No link points at
- * Dyma's site, and there is no "Edit this page" link.
+ * Dyma UTXO's site: Dyma's theme in sun yellow and Dyma's build rules, with its own pages,
+ * sidebar, homepage, static files (logos and favicon in the kit's yellow), names and links. No link
+ * points at Dyma's site, and there is no "Edit this page" link.
  */
 function utxoEditionConfig(base: Config): Config {
   const docsUrl = process.env.DOCS_URL?.trim();
@@ -218,7 +218,7 @@ function utxoEditionConfig(base: Config): Config {
             path: 'src/pages-utxo',
           },
           theme: {
-            // Dyma's theme, then UTXO blue in place of its orange.
+            // Dyma's theme, then sun yellow in place of its orange.
             customCss: ['./src/css/custom.css', './src/css/custom-utxo.css'],
           },
         } satisfies Preset.Options,
