@@ -1,6 +1,7 @@
 import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
+import {utxoHost} from './src/utils/utxo-host';
 
 /**
  * One repository, two documentation sites, chosen at build time with DOCS_EDITION:
@@ -163,6 +164,11 @@ export type UtxoSiteFields = {
   edition: 'utxo';
   /** e.g. example.io: the landing page lives at its root, the apps on its subdomains. */
   siteDomain: string;
+  /**
+   * A second deployment of the site under its own hosts (DOCS_HOST_PREFIX): `demo` puts the landing
+   * at demo.example.io and the apps at demo-app.example.io…; null for the site itself.
+   */
+  hostPrefix: string | null;
   /** The single contact address the site shows (support, billing, security, privacy). */
   contactEmail: string;
   /** Shown next to it wherever contact details are listed. */
@@ -236,10 +242,15 @@ function utxoEditionConfig(base: Config): Config {
     );
   }
   const domain = utxoSiteDomain(docsUrl);
-  const at = (subdomain?: string) => `https://${subdomain ? `${subdomain}.` : ''}${domain}`;
+  const hostPrefix = process.env.DOCS_HOST_PREFIX?.trim().toLowerCase() || null;
+  if (hostPrefix && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(hostPrefix)) {
+    throw new Error(`DOCS_HOST_PREFIX must be a DNS label such as "demo", not "${hostPrefix}".`);
+  }
+  const at = (subdomain?: string) => `https://${utxoHost(domain, hostPrefix, subdomain)}`;
   const fields: UtxoSiteFields = {
     edition: 'utxo',
     siteDomain: domain,
+    hostPrefix,
     contactEmail: `hello@${domain}`,
     secondContactEmail: 'dymaweb3@gmail.com',
     contractsRepoUrl: CARDANO_CONTRACTS_REPO_URL,

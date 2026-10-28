@@ -2,6 +2,7 @@ import type {ReactNode} from 'react';
 import CodeBlock from '@theme/CodeBlock';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import type {UtxoSiteFields} from '@site/docusaurus.config';
+import {utxoHost} from '@site/src/utils/utxo-host';
 
 /**
  * Dyma UTXO's own names in its pages (docs-utxo/). Its domain is never written in the
@@ -17,9 +18,9 @@ export function useUtxoSite(): UtxoSiteFields {
   return fields as UtxoSiteFields;
 }
 
-/** `example.io`, or `app.example.io` with `sub="app"`. */
+/** `example.io`, or `app.example.io` with `sub="app"` (`demo-app.example.io` on the demo). */
 function host(site: UtxoSiteFields, sub?: string): string {
-  return sub ? `${sub}.${site.siteDomain}` : site.siteDomain;
+  return utxoHost(site.siteDomain, site.hostPrefix ?? null, sub);
 }
 
 /** A host of the site as code, e.g. `api.example.io` (for hosts that are not pages to visit). */
