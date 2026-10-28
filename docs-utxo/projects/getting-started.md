@@ -23,12 +23,11 @@ Project ── Campaign (1..n) ── Quest (1..n)
 - **Integrations** (Project → Settings → Integrations): the Discord bot, your Telegram bot, GitHub
   repositories, and the signing secret for your own verification endpoint. See
   [Integrations](./integrations) and [Project REST verification](./rest-verification).
-- **Reward tokens** (Rewards → Reward tokens): register the token you will pay in, **ADA** or a
-  **Cardano native token**, given by its unit (the policy id followed by the asset name in
-  hexadecimal). Dyma UTXO checks on chain that the token exists, compares its decimals with the token
-  registry (CIP-26 or CIP-68 metadata) and approves it; a campaign can only go live with an approved
-  token. A native token cannot be frozen or clawed back by its issuer, although its minting policy
-  may still mint more.
+- **Reward tokens** (Rewards → Reward tokens): **ADA** and Cardano's native stablecoins (USDCx,
+  USDM, USDA, DJED, iUSD) are already in your list, verified by Dyma. To pay in another Cardano
+  native token, add it from the **Cardano Token Registry**: Dyma UTXO takes its name, ticker,
+  decimals and logo from there, and reviews it before a campaign can pay in it. See
+  [Reward tokens](./reward-tokens).
 - **Your Cardano wallet**: the first time you use a wallet in Studio (to lock a pool, sign an escrow
   action or pay a payout batch), Studio links it to your account and proves its payment address with
   one or two signed messages. No transaction, no fee.

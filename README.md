@@ -37,6 +37,11 @@ needs `DOCS_URL` (`https://docs.<its domain>`): its links (landing, app, Studio)
 address (`hello@<its domain>`) come from that host, or from `DOCS_SITE_DOMAIN` when set. The domain is
 never written in the repository, and neither site links to the other.
 
+Dyma UTXO's preprod demo sets `DOCS_DEMO_BANNER=1`: a sticky "Preprod demo" bar (Docusaurus'
+announcement bar, not dismissible) on top of every page, whose "Give feedback" link goes to
+`DOCS_DEMO_FEEDBACK_URL` (http(s) or `mailto:`), else to the contact address. Leave it unset
+everywhere else; Dyma's site ignores it.
+
 Text both sites share lives once in `docs-shared/` (files starting with `_`) and is imported by a
 page of each tree, for example `import Exports from '@site/docs-shared/projects/_exports.mdx';`
 then `<Exports />`. Both trees keep the same page ids (`projects/automatic-escrow`…), so the

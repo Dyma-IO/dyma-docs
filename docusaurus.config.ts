@@ -1,6 +1,7 @@
 import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
+import {utxoHost} from './src/utils/utxo-host';
 
 /**
  * One repository, two documentation sites, chosen at build time with DOCS_EDITION:
@@ -163,12 +164,67 @@ export type UtxoSiteFields = {
   edition: 'utxo';
   /** e.g. example.io: the landing page lives at its root, the apps on its subdomains. */
   siteDomain: string;
+  /**
+   * A second deployment of the site under its own hosts (DOCS_HOST_PREFIX): `demo` puts the landing
+   * at demo.example.io and the apps at demo-app.example.io…; null for the site itself.
+   */
+  hostPrefix: string | null;
   /** The single contact address the site shows (support, billing, security, privacy). */
   contactEmail: string;
   /** Shown next to it wherever contact details are listed. */
   secondContactEmail: string;
   contractsRepoUrl: string;
 };
+
+/**
+ * Dyma UTXO's preprod demo (DOCS_DEMO_BANNER=1): Docusaurus' announcement bar, made sticky above the
+ * navbar by src/css/demo-banner.css, says the site runs on test ADA and asks for feedback. Off on
+ * every other build, and never on Dyma's site. "Give feedback" goes to DOCS_DEMO_FEEDBACK_URL
+ * (http(s) or mailto:), else mails the contact address; an invalid URL fails the build.
+ */
+function utxoDemoBanner(
+  contactEmail: string,
+): {announcementBar: NonNullable<Preset.ThemeConfig['announcementBar']>; css: string} | null {
+  if (!/^(1|true|yes)$/i.test(process.env.DOCS_DEMO_BANNER?.trim() ?? '')) return null;
+  const configured = process.env.DOCS_DEMO_FEEDBACK_URL?.trim();
+  let feedback = `mailto:${contactEmail}`;
+  if (configured) {
+    let protocol = '';
+    try {
+      protocol = new URL(configured).protocol;
+    } catch {
+      // Reported below.
+    }
+    if (protocol !== 'https:' && protocol !== 'http:' && protocol !== 'mailto:') {
+      throw new Error(`DOCS_DEMO_FEEDBACK_URL must be an http(s) or mailto: URL, got "${configured}".`);
+    }
+    feedback = configured;
+  }
+  const href = feedback.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const newTab = /^https?:/i.test(feedback) ? ' target="_blank" rel="noopener noreferrer"' : '';
+  return {
+    announcementBar: {
+      id: 'dyma-utxo-preprod-demo',
+      // One line at every width: the whole text on wide screens, its first sentence from 641px, a
+      // short one on a phone (src/css/demo-banner.css).
+      content:
+        '<div class="demo-banner" role="region" aria-label="Preprod demo">' +
+        '<span class="demo-banner__text"><strong>Preprod demo:</strong> ' +
+        '<span class="demo-banner__short">test ADA only.</span>' +
+        '<span class="demo-banner__long">Dyma UTXO runs on Cardano preprod with test ADA.</span>' +
+        '<span class="demo-banner__more"> Help the community test it and tell us what to improve.</span>' +
+        '</span>' +
+        `<a class="demo-banner__link" href="${href}"${newTab}>Give feedback</a>` +
+        '</div>',
+      // The yellow fill with ink of the primary buttons (custom-utxo.css), in both themes.
+      backgroundColor: '#fdc001',
+      textColor: '#0a0a0a',
+      // Always there while the demo runs.
+      isCloseable: false,
+    },
+    css: './src/css/demo-banner.css',
+  };
+}
 
 const DISCUSSIONS_URL = 'https://github.com/orgs/Dyma-IO/discussions';
 const CARDANO_CONTRACTS_REPO_URL = 'https://github.com/Dyma-IO/dyma-contracts-cardano';
@@ -186,14 +242,20 @@ function utxoEditionConfig(base: Config): Config {
     );
   }
   const domain = utxoSiteDomain(docsUrl);
-  const at = (subdomain?: string) => `https://${subdomain ? `${subdomain}.` : ''}${domain}`;
+  const hostPrefix = process.env.DOCS_HOST_PREFIX?.trim().toLowerCase() || null;
+  if (hostPrefix && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(hostPrefix)) {
+    throw new Error(`DOCS_HOST_PREFIX must be a DNS label such as "demo", not "${hostPrefix}".`);
+  }
+  const at = (subdomain?: string) => `https://${utxoHost(domain, hostPrefix, subdomain)}`;
   const fields: UtxoSiteFields = {
     edition: 'utxo',
     siteDomain: domain,
+    hostPrefix,
     contactEmail: `hello@${domain}`,
     secondContactEmail: 'dymaweb3@gmail.com',
     contractsRepoUrl: CARDANO_CONTRACTS_REPO_URL,
   };
+  const demo = utxoDemoBanner(fields.contactEmail);
 
   return {
     ...base,
@@ -218,8 +280,8 @@ function utxoEditionConfig(base: Config): Config {
             path: 'src/pages-utxo',
           },
           theme: {
-            // Dyma's theme, then sun yellow in place of its orange.
-            customCss: ['./src/css/custom.css', './src/css/custom-utxo.css'],
+            // Dyma's theme, then sun yellow in place of its orange (and the preprod demo bar's rules).
+            customCss: ['./src/css/custom.css', './src/css/custom-utxo.css', ...(demo ? [demo.css] : [])],
           },
         } satisfies Preset.Options,
       ],
@@ -227,6 +289,7 @@ function utxoEditionConfig(base: Config): Config {
 
     themeConfig: {
       ...(base.themeConfig as Preset.ThemeConfig),
+      ...(demo ? {announcementBar: demo.announcementBar} : {}),
       navbar: {
         title: 'Docs',
         logo: {

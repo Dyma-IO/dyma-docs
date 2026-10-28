@@ -22,6 +22,10 @@ Dyma UTXO works with CIP-30 wallets, the standard way Cardano wallets connect to
 | **Yoroi** | also inside the Yoroi app's browser on a phone |
 | Typhon, GeroWallet, NuFi, Begin | listed next, with a link to install them when your browser does not have them |
 | Any other CIP-30 wallet | offered after these when your browser has it, under the name and icon it reports |
+| 1AM, Lace (Midnight) | Midnight wallets, in their own row: they sign in and link, and are never paid (see [Midnight wallets](#midnight-wallets)) |
+
+The wallets show as tiles, three per row, each with its logo and its state: **Detected** when your
+browser has it, **Get it** (a link to its site) when it does not.
 
 Phone browsers cannot reach wallet extensions. On a phone, open the earner app inside your wallet
 app's own browser: copy the page's link, open the wallet app's browser (often called DApps), paste
@@ -117,6 +121,44 @@ You are left out of a split (and told why on the campaign page) when:
 
 A campaign's own split rules can also leave you out: fewer points than its minimum, or not among its
 top N earners. See [Distribution modes and the split](../projects/distribution#split-rules).
+
+## Midnight wallets
+
+Dyma UTXO also signs you in with a Midnight wallet, such as **1AM** or **Lace** with Midnight. They
+show in their own row, under **Midnight**, once Dyma UTXO's operators have enabled a Midnight
+network.
+
+- A Midnight wallet **signs in and links only**. Nothing is paid on Midnight: rewards, claims and the
+  reputation badge go to a Cardano wallet, so link one before a reward needs it. A Midnight wallet
+  never becomes your main wallet.
+- It is a message the wallet signs, never a transaction, so it costs nothing.
+- The wallet signs with its **unshielded** key. Your account is your unshielded address: `mn_addr…`
+  on Midnight mainnet, `mn_addr_<network>…` on a test network, for example `mn_addr_preview…`.
+  Shielded addresses play no part.
+
+The message has the same form as a Cardano sign-in:
+
+<SiteCode>{`{app} wants you to sign in with your Midnight account:
+mn_addr…
+
+Sign in to Dyma UTXO.
+
+URI: https://{app}
+Version: 1
+Chain ID: midnight-mainnet
+Nonce: dyma_nonce_…
+Issued At: 2026-10-26T08:00:00Z
+Expiration Time: 2026-10-26T08:05:00Z`}</SiteCode>
+
+Midnight wallets sign `midnight_signed_message:<length in bytes>:` followed by that text, with a
+BIP-340 Schnorr signature over its SHA-256. Dyma UTXO checks that:
+
+- the address is a Midnight unshielded address on the network you chose;
+- the key the wallet returned is that address's key (the address is the SHA-256 of the key);
+- the signature is valid for the message Dyma UTXO issued.
+
+Wallets that sign with another kind of key (ECDSA, used by some custody wallets) are refused for
+now, with a message saying so.
 
 ## Safety
 

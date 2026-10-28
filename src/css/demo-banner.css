@@ -1,0 +1,112 @@
+/*
+ * Dyma UTXO's preprod demo bar. docusaurus.config.ts loads this file, and sets the announcement bar,
+ * only when DOCS_DEMO_BANNER=1, so no other build carries these rules. Docusaurus' announcement bar
+ * scrolls away with the page; here it stays on top, and the navbar, the doc sidebar, the table of
+ * contents and the heading anchors sit below it. `html` in front of each selector outranks the
+ * theme's own rules whatever order the stylesheets load in.
+ */
+
+:root {
+  --demo-banner-h: 32px;
+}
+
+html .theme-announcement-bar {
+  position: sticky;
+  top: 0;
+  /* Over the page, under the navbar, whose phone menu covers the bar like the rest of the page. */
+  z-index: calc(var(--ifm-z-index-fixed) - 1);
+  height: var(--demo-banner-h);
+  border-bottom: 0;
+}
+
+/* The content box may shrink, so the text truncates instead of wrapping into a tall bar. */
+html .theme-announcement-bar > * {
+  min-width: 0;
+  padding: 0;
+}
+
+html .navbar--fixed-top {
+  top: var(--demo-banner-h);
+}
+
+html [class*='anchorTargetStickyNavbar'] {
+  scroll-margin-top: calc(var(--ifm-navbar-height) + var(--demo-banner-h) + 0.5rem);
+}
+
+@media (min-width: 997px) {
+  /* The sidebar sticks below the bar, one bar shorter than the viewport. */
+  html .theme-doc-sidebar-container [class*='sidebarViewport'] {
+    top: var(--demo-banner-h);
+    max-height: calc(100vh - var(--demo-banner-h));
+  }
+
+  /* The theme makes room for a bar that scrolls away; this one never does. */
+  html [class*='menuWithAnnouncementBar'] {
+    margin-bottom: 0;
+  }
+
+  html .theme-doc-toc-desktop {
+    top: calc(var(--ifm-navbar-height) + var(--demo-banner-h) + 1rem);
+    max-height: calc(100vh - (var(--ifm-navbar-height) + var(--demo-banner-h) + 2rem));
+  }
+}
+
+.demo-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 0 16px;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.demo-banner__text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.demo-banner__short {
+  display: none;
+}
+
+html .demo-banner .demo-banner__link,
+html .demo-banner .demo-banner__link:hover {
+  flex: none;
+  border-radius: 4px;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Ink on the yellow: the theme's primary outline would vanish on it in the dark theme. */
+html .demo-banner .demo-banner__link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+@media (max-width: 1100px) {
+  .demo-banner__more {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .demo-banner {
+    gap: 10px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .demo-banner__short {
+    display: inline;
+  }
+
+  .demo-banner__long {
+    display: none;
+  }
+}

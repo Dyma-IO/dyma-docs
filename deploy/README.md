@@ -73,6 +73,10 @@ build never goes live.
 DOCS_EDITION=utxo DOCS_URL=https://docs.<domain> DOCS_BASE_URL=/ deploy/deploy.sh
 ```
 
+Dyma UTXO's preprod demo adds `DOCS_DEMO_BANNER=1` (and optionally `DOCS_DEMO_FEEDBACK_URL`, an
+http(s) or `mailto:` URL, else the contact address) for the sticky "Preprod demo" bar; the build
+reads both from the environment. Never set it for Dyma UTXO's production site.
+
 ## baseUrl
 
 The committed config targets GitHub Pages (`url=https://dyma-io.github.io`,

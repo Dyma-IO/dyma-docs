@@ -1,11 +1,12 @@
 ---
-description: Dyma UTXO's Aiken contracts on Cardano, the campaign escrow (a registry and five scripts) and the reputation badges.
+description: Dyma UTXO's Aiken contracts on Cardano, the campaign escrow (a registry and five scripts), the reputation badges and the job escrow.
 ---
 
 # Smart contracts overview
 
-Dyma UTXO's smart contracts back the *automatic* distribution mode (the **campaign escrow**) and
-certify Dyma Reputation tiers (the **reputation badges**). They are written in
+Dyma UTXO's smart contracts back the *automatic* distribution mode (the **campaign escrow**),
+certify Dyma Reputation tiers (the **reputation badges**) and hold the pay of escrow jobs (the **job
+escrow**). They are written in
 [Aiken](https://aiken-lang.org) v1.1.24 for Plutus V3 and published under the MIT license in
 [Dyma-IO/dyma-contracts-cardano](https://github.com/Dyma-IO/dyma-contracts-cardano).
 
@@ -13,6 +14,7 @@ certify Dyma Reputation tiers (the **reputation badges**). They are written in
 |---|---|---|
 | Campaign escrow | 0.1.0 | `registry`, `campaign_policy`, `campaign_state`, `campaign_payout`, `campaign_admin`, `campaign_shard` |
 | Reputation badges | 0.1.0 | `reputation` (CIP-68) |
+| Job escrow | 0.1.0 | `job_escrow` |
 
 Where they are deployed: [Deployments](./deployments).
 
@@ -150,6 +152,36 @@ token. Dyma UTXO computes reputation off chain and signs attestations; the scrip
 while its user token sits at an address whose payment key is the reference's owner: soulbound in
 effect. Badges carry no economic power: the boost a split applies comes from Dyma UTXO's records.
 For earners: [Reputation badge (CIP-68)](../earners/reputation-badge).
+
+### Job escrow
+
+`job_escrow` holds the pay of [Dyma Jobs](../earners/jobs) funded on Cardano. It is one script
+parameterised by a seed output, separate from the campaign escrow: its hash is the job tokens' policy
+id and the address of the configuration (an NFT named `dyma-jobs`) and of every job. A job is one
+UTxO holding its pool (rewards and fees) and a refundable ADA deposit, marked by its job token. Dyma
+signs a **ticket** to create a job and an **approval** for each assignment, release and withdrawal,
+with its attester key; the script checks them.
+
+| Redeemer | Who signs | Effect |
+|---|---|---|
+| mint `Create` | the owner, with a ticket | the ticket is Dyma's and fixes every term (asset, reward, fee, owner, expiry); its seed is spent; not paused; the pool reaches the minimum funding |
+| spend `TopUp` | the owner | the pool grows; the expiry never moves earlier |
+| spend `Assign` | the owner, with an approval | not paused; the worker is neither the owner nor the treasury |
+| spend `Release` | the worker, with an approval | not paused; the worker's payment key receives the reward (or the reward minus the fee when the fee is not on top) and the treasury the fee |
+| spend `Withdraw` | the owner, with an approval | not paused; at most the pool |
+| spend `Reclaim` | the owner alone, after the expiry | everything back to the owner, even while paused |
+| spend `UpdateConfig` | governance | any valid configuration |
+| spend `Rescue` | governance | only UTxOs without a job token or the configuration NFT |
+
+- **Dyma alone** cannot move a job's funds anywhere but to the assigned worker, and only with the
+  worker's signature.
+- **The owner alone** cannot take back approved pay before the expiry: the last deadline the funds
+  cover plus the claim margin (60 days by default).
+- **If Dyma disappears**, the owner reclaims everything after the expiry.
+- Approvals carry the job's nonce and live at most a day; a transaction may spend one job only.
+- A job's fee is capped by the configuration (10% on preprod).
+
+For operators: [Running Dyma Jobs](../operators/jobs).
 
 ## Lifecycle
 
