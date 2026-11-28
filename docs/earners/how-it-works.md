@@ -39,8 +39,10 @@ You can link more wallets and accounts later from your profile. Some quests need
 | Distributed | every payout is done; your payout transaction is linked on the campaign page |
 
 A campaign may also set **eligibility rules**, shown on its page: a verified e-mail, a minimum
-account age, linked accounts (X, Discord, Telegram, GitHub, YouTube) or an allowlist. The page tells
-you whether you qualify before you start.
+account age, linked accounts (X, Discord, Telegram, GitHub, YouTube), a minimum
+[reputation tier](./reputation-and-boosts#tier-requirements) or an invitation (private campaigns).
+The page tells you whether you qualify before you start. A single quest can also be locked until
+you reach a reputation tier: its page says which one.
 
 ## Completing a quest
 

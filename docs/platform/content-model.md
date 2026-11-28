@@ -30,7 +30,7 @@ can always suspend a project).
 | Start / end | required for automatic distribution; optional for manual |
 | Status | draft · pending review · scheduled · active · paused · ended ([lifecycle](../projects/campaign-lifecycle)) |
 | Distribution | mode (manual / automatic), reward token, pool, minimum payout, cap per earner, review grace, challenge window |
-| Eligibility | verified e-mail, minimum account age, required linked accounts, allowlist |
+| Eligibility | verified e-mail, minimum account age, required linked accounts, minimum reputation tier, private (invited accounts only) |
 | Quests | ordered list |
 
 ## Quest
@@ -44,7 +44,7 @@ can always suspend a project).
 | Configuration | type-specific settings (channel, repository, chain rule, quiz questions…), validated before the quest goes live |
 | Input schema | fields the earner fills in, for review-based and REST quests |
 | Recurrence and limits | once, interval, unlimited; max per earner; max in total ([recurring quests](../earners/recurring-quests)) |
-| Unlock rules | prerequisites (complete another quest first) and date rules |
+| Unlock rules | prerequisites (complete another quest first), date rules, a cap on participants, a minimum reputation tier; all of them or any one |
 | Position | display order in the campaign |
 | Status | draft · live · paused · archived |
 
