@@ -1,0 +1,37 @@
+A **Custom (Project REST API)** quest asks *your* server whether an earner did something only you
+can check (an in-app action, a purchase, a sign-up). Dyma calls your endpoint server-side, signs the
+call, and credits the quest when you answer yes. Available on plans with the **project REST API**
+feature (Growth and above by default).
+
+## Configure
+
+1. **Project → Settings → Integrations → REST API**: generate the project's **signing secret**. It
+   is stored encrypted; copy it to your server.
+2. In the quest editor, describe the request:
+
+| Field | Detail |
+|---|---|
+| Method | `GET` or `POST` |
+| URL | full `https://` URL. Templates are allowed in the path and query, **not** in the scheme or host, and every substituted value is URL-encoded, so earner input can never change where the call goes |
+| Query parameters, headers | key/value pairs; values may use templates |
+| JSON body | `POST` only; string values may use templates |
+| Timeout | seconds, default 30 (capped by Dyma) |
+| Sign request | on by default when the project has a secret |
+
+Templates: `{{user.id}}`, `{{wallet}}`, `{{submission.id}}`, `{{quest.id}}`, `{{campaign.id}}`,
+`{{project.id}}`, `{{inputs}}` (every field the earner filled in) and `{{inputs.<field>}}`. Earner
+fields come from the quest's input schema. Dyma never sends e-mail addresses.
+
+3. Use the editor's **dry run** to call your endpoint with sample values before publishing.
+
+## Request signature (v2)
+
+Every signed call carries three headers:
+
+| Header | Value |
+|---|---|
+| `X-Dyma-Timestamp` | Unix time in seconds when the call was signed |
+| `X-Dyma-Signature-V2` | `v2=` + hex HMAC-SHA256 of the canonical string below, keyed with your secret |
+| `X-Dyma-Signature` | legacy: hex HMAC-SHA256 of the body only (kept so older receivers keep working; it does not cover the method, the path or the time — migrate to v2) |
+
+Canonical string — four parts joined by `\n`:

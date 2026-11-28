@@ -2,6 +2,9 @@
 sidebar_position: 1
 ---
 
+import ProfilePicture from '@site/docs-shared/earners/_profile-picture.mdx';
+import QuestChecks from '@site/docs-shared/earners/_quest-checks.mdx';
+
 # How earning works
 
 Everything you do on Dyma happens inside a **campaign** run by a **project**. A campaign is a set
@@ -22,12 +25,7 @@ Open the earner app and choose any of:
 You can link more wallets and accounts later from your profile. Some quests need a linked account
 (X, Discord, Telegram, YouTube, GitHub) or a wallet on a given chain.
 
-## Your profile picture
-
-In **Profile**, pick one of Dyma's 16 preset characters or upload a photo (PNG, JPG or WebP, up to
-2 MB): the app lets you drag and zoom it into a square and uploads a 512 × 512 image. You can
-remove it at any time; your initials are shown instead. Your picture appears in leaderboards and
-participant lists. It stays off chain.
+<ProfilePicture />
 
 ## Campaign phases
 
@@ -56,47 +54,7 @@ Each quest shows what to do and how it is checked:
 | Review | content, screenshots, links, open answers | **In review** until a moderator decides |
 | Hybrid | automatic first, review as a fallback | after a provider error, or a few failed checks, you can **request a manual review** |
 
-Some quests are **locked** until you finish another one, or open only on certain dates; the quest
-page explains what unlocks it.
-
-### Points are credited at verification
-
-There is **no claim step**. The moment a quest is verified — instantly for automatic checks, or
-when a moderator approves it — the quest's points and XP are added to your account and you see
-the "+DP" confirmation. The amount is fixed at that moment: if the project later changes the
-quest's reward, what you earned does not change.
-
-| Quest status | Meaning |
-|---|---|
-| Started | you opened the quest; finish the task, then verify |
-| Checking / In review | an automatic re-check or a moderator is pending |
-| Done | verified and credited |
-| Try again | your last attempt was not accepted (the reason is shown); you can submit again |
-
-Your points in a campaign are the sum of the points of your verified quests there. Leaderboards,
-your share of a token pool and your profile totals all use that same number.
-
-### Retry rules you may meet
-
-- **Quiz**: by default 3 attempts, one minute apart (the project can change both). A failed
-  attempt tells you which answers were wrong, not the right ones.
-- **Secret code**: 10 wrong guesses in 15 minutes lock the quest for a while.
-- **Visit quests**: the waiting time the project set is enforced by the server, so verifying too
-  early fails with the time left.
-- **Social checks**: one social account can complete a quest for one Dyma account only, and an X
-  post can be used once.
-- A project whose plan quota for the month is used up stops accepting new completions until its
-  quota renews or it upgrades.
-
-## Where to find things
-
-| Page | Content |
-|---|---|
-| Home | today's quests, your check-in streak, campaigns in progress |
-| Discover | live, upcoming and ended campaigns, projects, quests |
-| Campaign page | quests grouped Daily / Repeatable / One-time, the reward pool, your points and share, the leaderboard |
-| My quests | everything you started and its status |
-| Rewards | your points, token payouts with their transaction links, your payout wallet |
+<QuestChecks />
 
 Next: [Daily, repeatable and lucky-draw quests](./recurring-quests) ·
 [Wallets and payout address](./wallets) · [Token rewards](./token-rewards).

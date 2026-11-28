@@ -2,6 +2,8 @@
 sidebar_position: 3
 ---
 
+import Previewing from '@site/docs-shared/projects/_previewing.mdx';
+
 # Distribution modes and the split
 
 A campaign's token pool is shared between the earners who qualify, **in proportion to their points**
@@ -200,8 +202,4 @@ moments:
 
 See [Automatic distribution](./automatic-escrow) for the deadlines.
 
-## Previewing
-
-During the campaign, **Rewards → Escrow & payouts** and the campaign's distribution panel show a
-live preview (participants, points, projected amounts, exclusions), and the
-[distribution CSV](./exports) exports it. The final list is frozen at the end of the review grace.
+<Previewing />

@@ -1,19 +1,14 @@
 ---
 sidebar_position: 6
+description: "In manual mode you keep the pool and pay earners yourself after the campaign. Dyma computes the"
 ---
+
+import ManualPayoutsWhen from '@site/docs-shared/projects/_manual-payouts-when.mdx';
+import ManualPayoutsOther from '@site/docs-shared/projects/_manual-payouts-other.mdx';
 
 # Manual payouts
 
-In manual mode you keep the pool and pay earners yourself after the campaign. Dyma computes the
-same split as the escrow would, with your [split rules](./distribution#split-rules), prepares the
-transfers, and checks every payout transaction on chain before marking anyone as paid. Whatever is
-not paid out simply stays with you.
-
-## When
-
-The final list is frozen at **end of campaign + review grace** (24 hours by default). Before that,
-**Rewards → Escrow & payouts** shows a live preview and the [distribution CSV](./exports) exports
-it with the status `projected`.
+<ManualPayoutsWhen />
 
 ## Paying with the payout assistant
 
@@ -32,25 +27,4 @@ it with the status `projected`.
 
 Repeat for each batch. The assistant shows what is pending, submitted and paid.
 
-## Paid another way
-
-- **Attach a transaction hash** — for transfers signed elsewhere (a multisig, a CLI, another tool):
-  the same on-chain checks apply.
-- **Mark as paid** — for payouts made without a matching on-chain transfer (for example settled off
-  Dyma): select the allocations, add a note (and a transaction hash if you have one). This is
-  recorded in the project's audit log, and earners see the payout as paid by the project.
-
-## Who is left out
-
-The same exclusions as in automatic mode apply (no payout wallet on the token's chain, below the
-minimum payout, shared address, project member, suspended account). Earners are told the reason and,
-before the list is frozen, how to fix a missing payout wallet. Your split rules apply too: earners
-below the minimum points or outside the top N are not paid.
-
-## Good practice
-
-- Pay soon after the list is frozen: earners see the campaign as **Distributing** until every payout
-  is recorded, then **Distributed**.
-- Keep the token's decimals in mind: amounts in the CSV are given both in base units
-  (`amount_base`) and in display units (`amount_display`).
-- If you want the pool to be guaranteed to earners up front, use [automatic distribution](./automatic-escrow) instead.
+<ManualPayoutsOther />

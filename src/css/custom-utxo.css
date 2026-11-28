@@ -1,0 +1,54 @@
+/*
+ * Dyma UTXO's site only (docusaurus.config.ts loads it after custom.css): sun yellow in place of
+ * Dyma's orange (dyma-brand/utxo/README.md). Yellow is light, so it splits: links, the active
+ * sidebar and navigation items and the other primary text are ochre #8D5E05 on the light theme
+ * and yellow #FDC001 on the dark one (each scale built like Docusaurus' palette generator, HSL
+ * lightness -10/-15/-30 % and +10/+15/+30 %), while primary buttons are yellow with ink text in
+ * both themes.
+ */
+
+:root {
+  --ifm-color-primary: #8d5e05;
+  --ifm-color-primary-dark: #7f5505;
+  --ifm-color-primary-darker: #785004;
+  --ifm-color-primary-darkest: #634204;
+  --ifm-color-primary-light: #9b6706;
+  --ifm-color-primary-lighter: #a26c06;
+  --ifm-color-primary-lightest: #b77a07;
+  --docusaurus-highlighted-code-line-bg: rgba(253, 192, 1, 0.18);
+}
+
+/* Every value again: the dark theme is set on the root, which also matches `:root` above. */
+[data-theme='dark'] {
+  --ifm-color-primary: #fdc001;
+  --ifm-color-primary-dark: #e4ad01;
+  --ifm-color-primary-darker: #d7a301;
+  --ifm-color-primary-darkest: #b18601;
+  --ifm-color-primary-light: #fec719;
+  --ifm-color-primary-lighter: #feca26;
+  --ifm-color-primary-lightest: #fed34c;
+  --docusaurus-highlighted-code-line-bg: rgba(253, 192, 1, 0.16);
+}
+
+/* Primary buttons: the yellow fill with ink text, in both themes. */
+.button--primary:not(.button--outline) {
+  --ifm-button-background-color: #fdc001;
+  --ifm-button-border-color: #fdc001;
+  --ifm-button-color: #0a0a0a;
+}
+
+.button--primary:not(.button--outline):hover {
+  --ifm-button-background-color: #f4b00c;
+  --ifm-button-border-color: #f4b00c;
+  --ifm-button-color: #0a0a0a;
+}
+
+[data-theme='dark'] .button--primary:not(.button--outline):hover {
+  --ifm-button-background-color: #ffd663;
+  --ifm-button-border-color: #ffd663;
+}
+
+/* The footer is dark in both themes: its links light up in yellow, not in the light theme's ochre. */
+.footer--dark {
+  --ifm-footer-link-hover-color: #fdc001;
+}

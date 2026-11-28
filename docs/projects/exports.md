@@ -1,85 +1,10 @@
 ---
 sidebar_position: 7
+description: "Insights → Exports downloads your data as CSV. Exports are available to every member of the"
 ---
+
+import Exports from '@site/docs-shared/projects/_exports.mdx';
 
 # CSV exports
 
-**Insights → Exports** downloads your data as CSV. Exports are available to every member of the
-project on **every plan**, have no row limit, and are streamed (large campaigns download as fast as
-the connection allows).
-
-| Export | Scope | Endpoint (API, for automation) |
-|---|---|---|
-| Participants | the whole project | `GET /v1/projects/:projectId/exports/participants.csv` |
-| Participants | one campaign | `GET /v1/projects/:projectId/campaigns/:campaignId/exports/participants.csv` |
-| Submissions | one campaign, optional `?status=` and `?questId=` | `…/campaigns/:campaignId/exports/submissions.csv` |
-| Leaderboard | one campaign | `…/campaigns/:campaignId/exports/leaderboard.csv` |
-| Distribution | one campaign | `…/campaigns/:campaignId/exports/distribution.csv` |
-
-Files are named `<project>-<campaign>-<kind>-<date>.csv`.
-
-## Format
-
-- UTF-8 with a byte order mark (spreadsheets detect the encoding), RFC 4180 quoting, CRLF line ends.
-- Dates are ISO 8601 in UTC; token amounts in base units are plain integers.
-- **Formula-injection guard**: a text cell starting with `=`, `+`, `-`, `@`, a tab or a line break
-  (including full-width forms) is prefixed with a single quote, so earner-supplied text never runs
-  as a spreadsheet formula.
-- **No e-mail addresses** are exported. Earners are identified by their public id (`dymauser_…`),
-  username and wallets.
-- Points follow the platform rule: the sum of the points credited by verified submissions, per
-  earner.
-
-## Columns
-
-### Participants
-
-| Column | Content |
-|---|---|
-| `user_public_id` | stable public id of the earner |
-| `username`, `display_name` | profile names |
-| `account_status` | active or suspended |
-| `primary_wallet` | the earner's primary wallet |
-| `wallets` | every linked wallet |
-| `campaigns` | project export only: campaigns the earner took part in |
-| `submissions` | submissions made |
-| `completions` | verified submissions |
-| `quests_completed` | distinct quests completed |
-| `points`, `xp` | credited points and XP |
-| `first_activity`, `last_activity` | first and last submission |
-
-### Submissions
-
-`submission_id`, `created_at`, `updated_at`, `verified_at`, `claimed_at`, `status`, `quest_id`,
-`quest_slug`, `quest_title`, `task_type`, `verification_method`, `user_public_id`, `username`,
-`display_name`, `wallet_address`, `points_awarded`, `xp_awarded`, `period_key` (the day, interval or
-`once` a completion belongs to), `reject_reason`, `inputs_json` (what the earner submitted).
-
-A verified submission has `status` = `claimed` and `verified_at` = `claimed_at` (points are credited
-at verification).
-
-### Leaderboard
-
-`rank`, `user_public_id`, `username`, `display_name`, `account_status`, `primary_wallet`, `points`,
-`xp`, `completions`, `quests_completed`, `share_pct` (share of the campaign's points),
-`last_verified_at`.
-
-### Distribution
-
-| Column | Content |
-|---|---|
-| `rank` | by points |
-| `user_public_id`, `username` | the earner |
-| `payout_address`, `payout_address_source` | where the payout goes; `wallet` (linked on the chain), `derived` (same key, other chain) or `manual` |
-| `points` | the earner's campaign points |
-| `share_pct` | share of the distributed amount |
-| `amount_base`, `amount_display` | payout in base units and in token units |
-| `denom`, `symbol` | the reward token |
-| `status` | `projected` before the list is frozen, then `pending`, `committed`, `paid`, `failed`, `skipped` or `excluded` |
-| `tx_hash` | payout transaction (manual payouts, or the escrow's) |
-| `batch` | manual payout batch number |
-| `excluded_reason` | `no_payout_address`, `below_min`, `suspended`, `project_member`, `duplicate_address`, `forbidden_address` |
-| `paid_at` | when the payout was recorded |
-
-The older `GET /v1/projects/:projectId/participants/export` (CSV wrapped in JSON) still answers but
-is deprecated: use the streamed files above.
+<Exports />

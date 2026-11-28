@@ -1,0 +1,10 @@
+In manual mode you keep the pool and pay earners yourself after the campaign. Dyma computes the
+same split as the escrow would, with your [split rules](./distribution#split-rules), prepares the
+transfers, and checks every payout transaction on chain before marking anyone as paid. Whatever is
+not paid out simply stays with you.
+
+## When
+
+The final list is frozen at **end of campaign + review grace** (24 hours by default). Before that,
+**Rewards → Escrow & payouts** shows a live preview and the [distribution CSV](./exports) exports
+it with the status `projected`.

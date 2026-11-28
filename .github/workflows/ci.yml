@@ -17,4 +17,11 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
-      - run: npm run build
+      - name: Build Dyma's site
+        run: npm run build
+      - name: Build Dyma UTXO's site
+        run: npm run build
+        env:
+          DOCS_EDITION: utxo
+          DOCS_URL: https://docs.example.invalid
+          DOCS_BASE_URL: /

@@ -57,6 +57,26 @@ Moving from the old layout (the checkout itself was served from `build/`): move 
 old directory aside, clone into `APP_ROOT/repo`, deploy once, then point the nginx
 `root` at `$APP_ROOT/current/build` ([`nginx/docs.conf`](nginx/docs.conf)).
 
+## Editions
+
+The repository builds two sites. `DOCS_EDITION` picks one: unset (or `cosmos`) builds Dyma's docs
+from `docs/`; `utxo` builds Dyma UTXO's from `docs-utxo/`. Dyma UTXO's site reads its links and its
+contact address from `DOCS_URL`, so the script refuses `DOCS_EDITION=utxo` without an explicit
+`DOCS_URL` (`DOCS_SITE_DOMAIN` overrides the domain read from it).
+
+`deploy.sh` passes `DOCS_EDITION` to `npm run build` explicitly (and to the copy of itself it
+re-runs), records it in `DEPLOY_INFO` (`edition=`), and refuses a build whose `build/index.html` is
+not titled after the edition ("Dyma Docs" or "Dyma UTXO Docs"), so an edition that did not reach the
+build never goes live.
+
+```bash
+DOCS_EDITION=utxo DOCS_URL=https://docs.<domain> DOCS_BASE_URL=/ deploy/deploy.sh
+```
+
+Dyma UTXO's preprod demo adds `DOCS_DEMO_BANNER=1` (and optionally `DOCS_DEMO_FEEDBACK_URL`, an
+http(s) or `mailto:` URL, else the contact address) for the sticky "Preprod demo" bar; the build
+reads both from the environment. Never set it for Dyma UTXO's production site.
+
 ## baseUrl
 
 The committed config targets GitHub Pages (`url=https://dyma-io.github.io`,

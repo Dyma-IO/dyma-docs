@@ -2,6 +2,8 @@
 sidebar_position: 8
 ---
 
+import PlanChanges from '@site/docs-shared/projects/_plan-changes.mdx';
+
 # Billing: plans paid in USDC
 
 Plans are priced in US dollars and paid in **USDC on Safrochain**, 1 USDC = 1 USD. There is no card
@@ -83,40 +85,4 @@ available on Injective yet.
   another.
 - The minimum charge is 1 USD.
 
-## Changing plan
-
-| Change | Effect |
-|---|---|
-| New (from Free, or after a lapse) | the term starts when the payment settles |
-| Renewal (same plan) | the term end moves by the months bought |
-| Upgrade (pricier plan) | switch now and pay only the difference for the days left in the term, plus any extra months |
-| Downgrade (cheaper paid plan) | prepaid, starts at the end of the current term; no refund for unused time |
-| Back to Free | scheduled at the end of the term (or now, if you choose) |
-
-## Renewals and grace
-
-- Nothing is charged automatically. Reminders arrive **7, 3 and 1 days** before the term ends and on
-  the day itself (e-mail and Studio notifications; they cannot be muted).
-- If the term ends unpaid, a **7-day grace** starts: your plan's limits stay in place, the
-  subscription shows *past due*, and reminders follow on days 3 and 6.
-- Paid during the grace, the new term starts where the old one ended (grace days are not free).
-- When the grace ends unpaid, the project moves to **Free** and Free's limits apply from then on
-  (300 verifications a month by default).
-- A project suspended by Dyma is not reactivated by a payment; contact support.
-
-## Free plan
-
-Free never expires. Its usage counter resets every month.
-
-## AI reviews
-
-Paid plans include a monthly number of **AI reviews**: Claude reviews the submissions of manual and
-hybrid quests and approves or rejects them (Starter 100, Growth 500, Pro 2,500, Enterprise 10,000
-a month by default; Free has none). Past the quota, submissions wait for your moderators until the
-next month. See [Moderation and AI review](./ai-review).
-
-## Invoices
-
-**Billing → Invoices** lists every paid request with its number, amount, asset, payer address,
-transaction hash and explorer link. Card invoices exist only if Dyma ever enables Stripe, which is
-switched off by default.
+<PlanChanges />
